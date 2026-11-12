@@ -44,6 +44,26 @@ public sealed class IndexHtmlTests
         Assert.Contains("css/app.css", links);
     }
 
+    private static string Meta(string attribute, string name) =>
+        Regex.Match(Html, $@"<meta\s+{attribute}=""{name}""\s+content=""(?<c>[^""]*)""").Groups["c"].Value;
+
+    [Fact]
+    public void The_description_fits_in_a_search_result()
+    {
+        // Search engines show roughly 155-160 characters and cut the rest mid-sentence.
+        var description = Meta("name", "description");
+
+        Assert.False(string.IsNullOrWhiteSpace(description), "index.html has no meta description.");
+        Assert.True(description.Length <= 160, $"The description is {description.Length} characters; search results cut it off at about 160.");
+    }
+
+    [Fact]
+    public void Link_previews_have_a_title_and_description()
+    {
+        Assert.False(string.IsNullOrWhiteSpace(Meta("property", "og:title")));
+        Assert.False(string.IsNullOrWhiteSpace(Meta("property", "og:description")));
+    }
+
     [Theory]
     [InlineData("favicon-16.png", 16)]
     [InlineData("favicon-32.png", 32)]

@@ -595,3 +595,38 @@ images. Checked by planting a dead link and a 16px file named `favicon-32.png`.
   released card. The pill's `.tag--live` style had no other use and is gone.
 - Releasing a part is still just `"Available": true`: its date tag disappears and its Start button
   appears, with nothing else to edit.
+
+### The home page hook is the story, not a feature list
+
+The hero used to say what the course *is* ("Five hands-on challenges… a free badge at the end of every
+part"). It now does what Part 1 does: drops the reader into the scene first, then says what they will
+do, then the logistics. Order matters here — the first thing a visitor reads should be a reason to care.
+
+- **Headline:** "Santa's workshop needs a developer" (was "Build Santa's Workshop, learn MongoDB").
+- **The scene** (larger type, white): the leather ledger, fountain pen, four thousand pages, three elves
+  with repetitive strain injury, cocoa on the entire letter M. Deliberately the *same* facts as Part 1's
+  story, so a reader who clicks through meets the same workshop.
+- **The promise:** move the catalogue into MongoDB, settle who's been naughty or nice, help the elves find
+  the perfect gift for any child, then build an AI assistant that has read the Elf Handbook. Each of those
+  maps to a part (1, 2, 3A/3B, 4); nothing is promised that a part doesn't deliver.
+- **The logistics, last and short:** free badge, no experience needed, nothing expires. "This isn't a daily
+  puzzle" moved out of the hero — the FAQ answers it, and the hero needed to fit above the fold.
+- **No date in the story.** Part 1 opens "It is the third of November"; the home page must not, because it
+  has to still read correctly in February.
+
+Fitting above the fold: at 1440x780 (roughly a 13-inch laptop's page area) the headline, the story, the
+promise and both buttons are visible without scrolling. That took trimming the hero's vertical padding and
+shortening the logistics line to two lines.
+
+`StoryConsistencyTests` keeps the home page and Part 1 telling the same story (six shared facts) and fails
+if a month or year appears in the home hero. Checked by planting a changed story and a date.
+
+### Share text carries the same hook
+
+`index.html`'s `<meta name="description">` and `og:description` (what search results and link previews
+show) said "Five hands-on C# challenges that take you from your first InsertOne…". They now lead with the
+same hook as the hero: *"Cocoa on Santa's four-thousand-page ledger! Rescue it in five hands-on C#
+challenges, from InsertOne() to an AI agent. Free MongoDB skill badges."* — 145 characters, under the
+~160 search engines show before cutting mid-sentence. `IndexHtmlTests` fails if the description grows
+past 160 or the Open Graph title/description go missing. Also fixed "a enormous" → "an enormous" in
+Part 1's story.

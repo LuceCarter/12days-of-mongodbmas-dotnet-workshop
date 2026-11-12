@@ -10,7 +10,7 @@
 
 It is the third of November, and the workshop is in trouble.
 
-For as long as anyone can remember, Santa's toy catalogue has lived in a enormous
+For as long as anyone can remember, Santa's toy catalogue has lived in an enormous
 leather ledger, written in fountain pen, kept on a lectern by the window. It worked
 beautifully for several centuries. It is now four thousand pages long, three elves
 have repetitive strain injury, and last Tuesday somebody spilled cocoa on the entire
