@@ -1,0 +1,545 @@
+[
+  {
+    "name": "Rocking Horse",
+    "price": 89.99,
+    "minAge": 2,
+    "maxAge": 6,
+    "category": "wooden",
+    "inStock": true,
+    "stockCount": 12,
+    "discontinued": false,
+    "tags": [
+      "classic",
+      "wooden",
+      "horse"
+    ],
+    "description": "A hand-carved wooden rocking horse with a real horsehair mane and a polished saddle. A workshop classic that has been made here for over a century."
+  },
+  {
+    "name": "Dinosaur Dig Kit",
+    "price": 18.5,
+    "minAge": 6,
+    "maxAge": 10,
+    "category": "craft",
+    "inStock": true,
+    "stockCount": 4,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "science",
+      "digging"
+    ],
+    "description": "Chip a plaster block apart with a tiny hammer and brush to uncover a complete toy dinosaur skeleton. Budding palaeontologists love it."
+  },
+  {
+    "name": "Stegosaurus Soft Toy",
+    "price": 14.0,
+    "minAge": 0,
+    "maxAge": 5,
+    "category": "soft toy",
+    "inStock": true,
+    "stockCount": 31,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "cuddly",
+      "green"
+    ],
+    "description": "An extremely huggable stegosaurus with felt plates down its back and embroidered eyes. Safe from birth."
+  },
+  {
+    "name": "Rocket Launch Playset",
+    "price": 34.99,
+    "minAge": 5,
+    "maxAge": 9,
+    "category": "electronic",
+    "inStock": true,
+    "stockCount": 8,
+    "discontinued": false,
+    "tags": [
+      "space",
+      "rocket",
+      "lights"
+    ],
+    "description": "A countdown console with flashing lights and a spring-loaded rocket that really launches across the room. Includes two astronaut figures."
+  },
+  {
+    "name": "Solar System Puzzle",
+    "price": 12.99,
+    "minAge": 5,
+    "maxAge": 8,
+    "category": "puzzle",
+    "inStock": true,
+    "stockCount": 22,
+    "discontinued": false,
+    "tags": [
+      "space",
+      "planets",
+      "educational"
+    ],
+    "description": "A hundred-piece circular jigsaw of the planets, with each world labelled and shown to scale against the sun."
+  },
+  {
+    "name": "Tyrannosaurus Floor Puzzle",
+    "price": 9.99,
+    "minAge": 4,
+    "maxAge": 7,
+    "category": "puzzle",
+    "inStock": true,
+    "stockCount": 6,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "educational",
+      "large"
+    ],
+    "description": "A giant floor jigsaw that builds into a life-size baby T. rex, nearly a metre long when finished."
+  },
+  {
+    "name": "Snakes and Ladders",
+    "price": 8.99,
+    "minAge": 4,
+    "maxAge": 10,
+    "category": "board game",
+    "inStock": true,
+    "stockCount": 40,
+    "discontinued": false,
+    "tags": [
+      "classic",
+      "family",
+      "dice"
+    ],
+    "description": "The old favourite, printed on a folding wooden board with chunky counters that small hands can hold."
+  },
+  {
+    "name": "Elf Express Train Set",
+    "price": 64.5,
+    "minAge": 3,
+    "maxAge": 8,
+    "category": "wooden",
+    "inStock": true,
+    "stockCount": 9,
+    "discontinued": false,
+    "tags": [
+      "train",
+      "wooden",
+      "classic"
+    ],
+    "description": "A figure-of-eight wooden track with a magnetic engine, three carriages, a tunnel and a little station painted in workshop red and green."
+  },
+  {
+    "name": "Space Explorer Board Game",
+    "price": 24.99,
+    "minAge": 7,
+    "maxAge": 12,
+    "category": "board game",
+    "inStock": true,
+    "stockCount": 3,
+    "discontinued": false,
+    "tags": [
+      "space",
+      "strategy",
+      "family"
+    ],
+    "description": "Race your crew between planets collecting fuel and samples. Takes about forty minutes and works well for two to four players."
+  },
+  {
+    "name": "Velociraptor Figure",
+    "price": 6.5,
+    "minAge": 5,
+    "maxAge": 11,
+    "category": "electronic",
+    "inStock": true,
+    "stockCount": 27,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "poseable",
+      "roaring"
+    ],
+    "description": "A poseable velociraptor with jointed legs and a button in its back that produces a convincingly unpleasant screech."
+  },
+  {
+    "name": "Knitted Snowman",
+    "price": 11.0,
+    "minAge": 0,
+    "maxAge": 4,
+    "category": "soft toy",
+    "inStock": true,
+    "stockCount": 18,
+    "discontinued": false,
+    "tags": [
+      "winter",
+      "cuddly",
+      "classic"
+    ],
+    "description": "A soft knitted snowman with a stitched carrot nose and a stripy scarf. Machine washable, which parents appreciate."
+  },
+  {
+    "name": "Marble Run Starter Set",
+    "price": 29.99,
+    "minAge": 5,
+    "maxAge": 10,
+    "category": "wooden",
+    "inStock": true,
+    "stockCount": 5,
+    "discontinued": false,
+    "tags": [
+      "building",
+      "wooden",
+      "physics"
+    ],
+    "description": "Forty beech blocks with channels and funnels, plus twenty glass marbles. Builds a different run every time."
+  },
+  {
+    "name": "Pocket Telescope",
+    "price": 19.99,
+    "minAge": 8,
+    "maxAge": 14,
+    "category": "outdoor",
+    "inStock": true,
+    "stockCount": 7,
+    "discontinued": false,
+    "tags": [
+      "space",
+      "stars",
+      "outdoor"
+    ],
+    "description": "A small refracting telescope with a folding tripod, good enough to show the craters of the moon and the moons of Jupiter."
+  },
+  {
+    "name": "Finger Painting Set",
+    "price": 7.99,
+    "minAge": 2,
+    "maxAge": 6,
+    "category": "craft",
+    "inStock": true,
+    "stockCount": 35,
+    "discontinued": false,
+    "tags": [
+      "art",
+      "messy",
+      "washable"
+    ],
+    "description": "Six pots of thick, bright, entirely washable paint with a pad of heavy paper. Aprons sold separately, and strongly recommended."
+  },
+  {
+    "name": "Triceratops Night Light",
+    "price": 16.75,
+    "minAge": 3,
+    "maxAge": 9,
+    "category": "electronic",
+    "inStock": true,
+    "stockCount": 2,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "lights",
+      "bedtime"
+    ],
+    "description": "A frosted triceratops that glows a gentle amber and fades out over twenty minutes once the room goes quiet."
+  },
+  {
+    "name": "Wooden Tool Bench",
+    "price": 42.0,
+    "minAge": 3,
+    "maxAge": 7,
+    "category": "wooden",
+    "inStock": true,
+    "stockCount": 11,
+    "discontinued": false,
+    "tags": [
+      "pretend play",
+      "wooden",
+      "building"
+    ],
+    "description": "A sturdy little workbench with a wooden saw, hammer, spanner and a rack of oversized nuts and bolts."
+  },
+  {
+    "name": "Constellation Projector",
+    "price": 27.5,
+    "minAge": 6,
+    "maxAge": 12,
+    "category": "electronic",
+    "inStock": true,
+    "stockCount": 1,
+    "discontinued": false,
+    "tags": [
+      "space",
+      "stars",
+      "bedtime"
+    ],
+    "description": "Throws the northern night sky across a bedroom ceiling and slowly rotates, with a disc for each season."
+  },
+  {
+    "name": "Memory Match Cards",
+    "price": 5.99,
+    "minAge": 3,
+    "maxAge": 8,
+    "category": "board game",
+    "inStock": true,
+    "stockCount": 48,
+    "discontinued": false,
+    "tags": [
+      "cards",
+      "memory",
+      "family"
+    ],
+    "description": "Fifty-four illustrated cards in twenty-seven pairs, showing animals from every continent. Harder than it looks."
+  },
+  {
+    "name": "Brachiosaurus Balance Game",
+    "price": 21.99,
+    "minAge": 5,
+    "maxAge": 8,
+    "category": "board game",
+    "inStock": true,
+    "stockCount": 14,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "dexterity",
+      "family"
+    ],
+    "description": "Stack wooden dinosaurs onto a wobbling brachiosaurus without bringing the whole herd down."
+  },
+  {
+    "name": "Kite, Red Dragon",
+    "price": 13.5,
+    "minAge": 6,
+    "maxAge": 12,
+    "category": "outdoor",
+    "inStock": true,
+    "stockCount": 16,
+    "discontinued": false,
+    "tags": [
+      "outdoor",
+      "flying",
+      "windy"
+    ],
+    "description": "A ripstop delta kite with a long red tail that flies happily in a light breeze. Line and winder included."
+  },
+  {
+    "name": "Beeswax Modelling Set",
+    "price": 15.25,
+    "minAge": 4,
+    "maxAge": 10,
+    "category": "craft",
+    "inStock": true,
+    "stockCount": 23,
+    "discontinued": false,
+    "tags": [
+      "art",
+      "wax",
+      "natural"
+    ],
+    "description": "Twelve sheets of coloured beeswax that soften in warm hands and hold their shape without drying out or cracking."
+  },
+  {
+    "name": "Jigsaw: Santa's Workshop",
+    "price": 11.99,
+    "minAge": 7,
+    "maxAge": 14,
+    "category": "puzzle",
+    "inStock": true,
+    "stockCount": 19,
+    "discontinued": false,
+    "tags": [
+      "classic",
+      "winter",
+      "detailed"
+    ],
+    "description": "Five hundred pieces of elves at work, with a hundred tiny details hidden in the background to find."
+  },
+  {
+    "name": "Skipping Rope, Wooden Handles",
+    "price": 4.99,
+    "minAge": 5,
+    "maxAge": 11,
+    "category": "outdoor",
+    "inStock": true,
+    "stockCount": 52,
+    "discontinued": false,
+    "tags": [
+      "outdoor",
+      "active",
+      "classic"
+    ],
+    "description": "A cotton rope with turned beech handles and smooth bearings, adjustable for height."
+  },
+  {
+    "name": "Pterodactyl Glider",
+    "price": 3.99,
+    "minAge": 6,
+    "maxAge": 10,
+    "category": "outdoor",
+    "inStock": true,
+    "stockCount": 61,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "flying",
+      "outdoor"
+    ],
+    "description": "A balsa wood glider shaped like a pterosaur. Surprisingly good at finding thermals, and at landing on roofs."
+  },
+  {
+    "name": "Raptor Claw Torch",
+    "price": 8.75,
+    "minAge": 5,
+    "maxAge": 8,
+    "category": "electronic",
+    "inStock": true,
+    "stockCount": 13,
+    "discontinued": false,
+    "tags": [
+      "dinosaur",
+      "lights",
+      "outdoor"
+    ],
+    "description": "A moulded raptor claw that grips a bright little torch, for reading under the covers or inspecting the garden after dark."
+  },
+  {
+    "name": "Moon Lander Model Kit",
+    "price": 23.4,
+    "minAge": 6,
+    "maxAge": 8,
+    "category": "craft",
+    "inStock": true,
+    "stockCount": 6,
+    "discontinued": false,
+    "tags": [
+      "space",
+      "building",
+      "model"
+    ],
+    "description": "Forty snap-together parts that build a lunar module with folding legs and a detachable ascent stage. No glue needed."
+  },
+  {
+    "name": "Woodland Animal Dominoes",
+    "price": 9.25,
+    "minAge": 5,
+    "maxAge": 8,
+    "category": "board game",
+    "inStock": true,
+    "stockCount": 21,
+    "discontinued": false,
+    "tags": [
+      "classic",
+      "family",
+      "wooden"
+    ],
+    "description": "Twenty-eight wooden dominoes printed with foxes, owls and hedgehogs instead of spots, so younger players can match pictures."
+  },
+  {
+    "name": "Clockwork Tin Robot",
+    "price": 22.0,
+    "minAge": 6,
+    "maxAge": 12,
+    "category": "electronic",
+    "inStock": false,
+    "stockCount": 0,
+    "discontinued": false,
+    "tags": [
+      "classic",
+      "wind-up",
+      "metal"
+    ],
+    "description": "A lithographed tin robot that marches forward, strikes sparks behind its visor, and turns around when it meets a wall."
+  },
+  {
+    "name": "Ant Farm",
+    "price": 17.99,
+    "minAge": 7,
+    "maxAge": 12,
+    "category": "outdoor",
+    "inStock": false,
+    "stockCount": 0,
+    "discontinued": false,
+    "tags": [
+      "science",
+      "insects",
+      "educational"
+    ],
+    "description": "A clear gel habitat that lets you watch tunnels appear day by day. Ants are not included, for reasons the elves consider obvious."
+  },
+  {
+    "name": "Quill and Ink Set",
+    "price": 26.0,
+    "minAge": 9,
+    "maxAge": 14,
+    "category": "craft",
+    "inStock": false,
+    "stockCount": 0,
+    "discontinued": false,
+    "tags": [
+      "writing",
+      "classic",
+      "messy"
+    ],
+    "description": "A real feather quill, two nibs and a pot of midnight-blue ink, for writing letters the proper way."
+  },
+  {
+    "name": "Lead Soldier Set",
+    "price": 31.0,
+    "minAge": 8,
+    "maxAge": 14,
+    "category": "wooden",
+    "inStock": false,
+    "stockCount": 0,
+    "discontinued": true,
+    "tags": [
+      "classic",
+      "collectable"
+    ],
+    "description": "Thirty hand-painted soldiers in a wooden case. Withdrawn by the workshop on safety grounds and replaced by the pewter set."
+  },
+  {
+    "name": "Jack-in-the-Box, Original",
+    "price": 19.0,
+    "minAge": 2,
+    "maxAge": 6,
+    "category": "wooden",
+    "inStock": false,
+    "stockCount": 0,
+    "discontinued": true,
+    "tags": [
+      "classic",
+      "spring",
+      "surprise"
+    ],
+    "description": "The original spring-loaded design. Discontinued after the elves agreed it was a little too startling."
+  },
+  {
+    "name": "Magnetic Fishing Game",
+    "price": 10.5,
+    "minAge": 3,
+    "maxAge": 6,
+    "category": "board game",
+    "inStock": true,
+    "stockCount": 2,
+    "discontinued": true,
+    "tags": [
+      "magnets",
+      "family",
+      "classic"
+    ],
+    "description": "Twelve wooden fish with magnetic mouths and two bamboo rods. Being retired at the end of this season."
+  },
+  {
+    "name": "Glow Stars, Pack of 100",
+    "price": 6.99,
+    "minAge": 4,
+    "maxAge": 12,
+    "category": "craft",
+    "inStock": false,
+    "stockCount": 0,
+    "discontinued": true,
+    "tags": [
+      "space",
+      "stars",
+      "bedtime"
+    ],
+    "description": "Self-adhesive glow-in-the-dark stars in four sizes. Discontinued once the constellation projector arrived."
+  }
+]

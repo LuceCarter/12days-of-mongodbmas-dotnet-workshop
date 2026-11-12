@@ -1,0 +1,77 @@
+# Publishes the Blazor WebAssembly landing page to GitHub Pages.
+#
+# The page is entirely static — no server, no database — so this is a plain
+# "build it and upload the folder" job. The two fiddly bits are both handled
+# below: the <base href> has to match the repository subpath, and client-side
+# routing needs a 404.html fallback.
+#
+# One-time setup in the repo: Settings → Pages → Source → "GitHub Actions".
+
+name: Deploy landing page
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'LandingPage/**'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Relinks the WebAssembly runtime and strips what the app never calls.
+      # Without it the first load is noticeably heavier.
+      - name: Install wasm-tools
+        run: dotnet workload install wasm-tools
+
+      - name: Publish
+        run: dotnet publish LandingPage/SantasWorkshop.LandingPage.csproj -c Release -o publish
+
+      # GitHub Pages serves a project site from https://<user>.github.io/<repo>/,
+      # so every asset path has to be prefixed with the repository name. The
+      # checked-in index.html uses "/" so that `dotnet run` works locally.
+      - name: Rewrite base href for the Pages subpath
+        run: |
+          sed -i 's|<base href="/" />|<base href="/${{ github.event.repository.name }}/" />|' publish/wwwroot/index.html
+          grep '<base' publish/wwwroot/index.html
+
+      # Blazor routes like /parts don't exist as files. GitHub Pages serves
+      # 404.html for anything it can't find, so making that a copy of index.html
+      # hands the URL to the Blazor router instead of showing a 404.
+      - name: Add SPA fallback
+        run: cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

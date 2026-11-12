@@ -1,0 +1,48 @@
+<Project>
+  <!--
+    Central package management. Every version used anywhere in the repo is pinned
+    here, exactly once. This matters: these challenges need to still work in
+    February, so nothing floats.
+    Versions verified 2026-11-03.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="MongoDB">
+    <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <!--
+      xUnit v3 runs on the Microsoft Testing Platform. Microsoft.NET.Test.Sdk and
+      xunit.runner.visualstudio are VSTest-era packages and are deliberately absent —
+      the .NET 10 SDK no longer supports VSTest here. The opt-in lives in global.json.
+    -->
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Hosting and configuration">
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup Label="Blazor WebAssembly (landing page)">
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.14" />
+  </ItemGroup>
+
+  <!--
+    Parts 3B and 4 only. Added when those parts land, listed here now so the
+    version story is in one place.
+      Microsoft.Extensions.AI                              10.11.0
+      Microsoft.Extensions.AI.OpenAI                       10.11.0   (Gemini via its OpenAI-compatible endpoint)
+      Microsoft.Extensions.VectorData.Abstractions         10.11.0
+      Microsoft.Agents.AI                                  1.27.0
+      Microsoft.SemanticKernel.Connectors.MongoDB          1.74.0-preview   (PREVIEW — see DECISIONS.md)
+  -->
+</Project>

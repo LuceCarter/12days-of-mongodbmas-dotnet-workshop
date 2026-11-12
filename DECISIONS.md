@@ -1,0 +1,320 @@
+# Decisions
+
+A running log of calls made while building this, and why. Newest section last.
+Anything still unverified is listed at the bottom.
+
+---
+
+## 2026-11-03 — Foundations
+
+### Local environment: Atlas Local in docker-compose, not Aspire
+
+`mongodb/mongodb-atlas-local:8.0.15`, pinned.
+
+- **Why this image**: it bundles `mongod` and `mongot` in one container, which is
+  what makes `$search` and `$vectorSearch` work locally. A plain `mongo` container
+  cannot do either, so Parts 3A, 3B and 4 would be impossible without an Atlas account.
+- **Why 8.0.15 and not 8.3.11** (both current as of today): 8.0 is what Atlas M0
+  free-tier clusters run. Learners who switch to the Atlas fallback should get the
+  same behaviour, not a newer one.
+- **Why pinned at all**: these challenges have to still work in February. Verified
+  available tags on 2026-11-03: `8.3.11`, `8.0.15`, `7.0.28`.
+- **`hostname: mongodb` is required.** The single-node replica set advertises itself
+  under this name. Remove it and the replica set never comes up.
+- **`/data/mongot` must be mounted.** Search and Vector Search *index definitions*
+  live there, not in `/data/db`. Verified by experiment: created a vector index, ran
+  `docker compose down && docker compose up -d`, and the index came back `READY` and
+  `queryable: true`. Without the mount it would have been silently lost.
+
+Atlas free tier remains the documented fallback everywhere, via `MONGODB_URI`.
+
+### Search indexes take ~20 seconds to become queryable
+
+Measured locally. Creating a search index returns immediately, but querying it
+before `queryable: true` returns nothing — with no error. This is a trap for
+learners and for tests.
+
+Consequences:
+- `tools/doctor --deep` polls for `queryable` rather than sleeping a fixed time.
+- Part 3A/3B test fixtures must do the same. A fixed `Task.Delay` will be flaky in CI.
+- The Part 3A README has to call this out explicitly.
+
+### LLM: Google Gemini free tier. Embeddings: Voyage AI
+
+**GitHub Models was the original plan and is gone** — fully retired on 2026-07-30,
+including the playground, catalog, inference API and BYOK.
+
+Gemini chosen because the free tier needs no credit card, works worldwide, documents
+tool/function calling, and exposes an OpenAI-compatible endpoint
+(`https://generativelanguage.googleapis.com/v1beta/openai/`) so it can be reached
+through `Microsoft.Extensions.AI.OpenAI` and used as an `IChatClient`.
+
+Everything in Part 4 is written against `IChatClient`, so swapping provider is a
+config change. A "Level up" step makes the learner actually do it.
+
+Using **different providers for the generator and the embeddings is deliberate** —
+it is a RAG badge objective ("a generator that is separate from the embedding model"),
+and Part 4A's README says so.
+
+Note: Voyage's free tier excludes the older `voyage-3.x` text models. Use `voyage-3.5`.
+
+### Vector access is deliberately two-layered
+
+- **Part 3B uses the raw driver** and hand-writes the `$vectorSearch` stage. The badge
+  assesses exactly that, and it is the only way to do the age-range prefilter
+  (`$gte`/`$lte`) the story needs.
+- **Part 4 uses the abstraction**: `MongoVectorStore` from
+  `Microsoft.SemanticKernel.Connectors.MongoDB`, wrapped in an adapter delegate and
+  handed to Microsoft Agent Framework's `TextSearchProvider`.
+
+Two caveats recorded honestly in the Part 4A README:
+- That connector is **preview only** (`1.74.0-preview`, published 2026-03-20; there is
+  no stable release) and its filter support is **`EqualTo` only**.
+- The `EqualTo` limit does not bite us, because `TextSearchProvider` takes a *delegate*,
+  not a collection. Handbook prefilters are equality anyway, and where a range is needed
+  the delegate can drop to the raw driver.
+
+MongoDB's own `MongoDB.AgentFramework` connector was considered and rejected: it has
+never been published to NuGet, has no release tags, last saw a commit on 2026-09-10,
+and fails closed outside Agent Framework `[1.13.0, 1.17.0)` while the current release
+is 1.27.0. It remains useful as a reference implementation.
+
+### Extra field on the Toy model: `stockCount`
+
+The brief's model lists `InStock` (a bool). Part 1 also needs "count of low-stock toys",
+and the bonus section needs `$inc`. A bool cannot express either. Added `stockCount`
+(int) alongside `inStock`. Flagging it because it is an addition to the brief.
+
+### Array equality needs `AnyEq`, not `Eq` — and this matters for the badge
+
+Badge objective 2.3 is "query an array field using an equality constraint with a
+scalar value". In the shell that is simply `{ tags: "dinosaur" }`.
+
+In C# with a typed `Builders<Toy>` filter, the obvious translation **does not compile**:
+
+```csharp
+Builders<Toy>.Filter.Eq(t => t.Tags, "dinosaur")   // CS1660 — Tags is List<string>
+```
+
+All three of these work and send the same query (verified: 8 matches each):
+
+```csharp
+Builders<Toy>.Filter.AnyEq(t => t.Tags, "dinosaur")   // typed Builders
+new BsonDocument("tags", "dinosaur")                  // exactly what the shell sends
+toys.Find(t => t.Tags.Contains("dinosaur"))           // LINQ
+```
+
+This is exactly the kind of gap `docs/csharp-to-badge.md` exists for, so Part 1's step
+for 2.3 shows the raw BSON alongside `AnyEq`. Otherwise a learner meets
+`{ tags: "dinosaur" }` in the assessment having only ever typed `AnyEq`, and may think
+the shell needs `$elemMatch`.
+
+### Tests: xUnit v3 on the Microsoft Testing Platform
+
+`dotnet new xunit` still scaffolds xUnit **v2**, which on the .NET 10 SDK fails with:
+
+> Testing with VSTest target is no longer supported by Microsoft.Testing.Platform on
+> .NET 10 SDK and later.
+
+The .NET 10 SDK dropped VSTest for this platform. The opt-in is a `test` block in
+**`global.json`** (not `dotnet.config`, which is a dead end — it is silently ignored):
+
+```json
+{ "test": { "runner": "Microsoft.Testing.Platform" } }
+```
+
+Test projects therefore need `<OutputType>Exe</OutputType>` and a plain `xunit.v3`
+reference — **no** `Microsoft.NET.Test.Sdk` and no `xunit.runner.visualstudio`, both of
+which are VSTest-era packages. The MSBuild property
+`TestingPlatformDotnetTestSupport` is a .NET 9-era mechanism and does nothing here.
+
+Two smaller calls:
+- All test classes share one `[CollectionDefinition(..., DisableParallelization = true)]`
+  collection. They reseed the same `toys` collection before each test, so parallel
+  classes would tread on each other. `CollectionBehaviorAttribute.DisableTestParallelization`
+  is obsolete in this version.
+- `xUnit1051` (thread `CancellationToken` through every driver call) is suppressed via
+  `NoWarn` in the test csproj. It fired 16 times, and the tests double as worked
+  examples that learners read — the clutter costs more than the cancellation
+  responsiveness buys on a one-second local test run.
+
+### Versions pinned (verified on nuget.org, 2026-11-03)
+
+| Package | Version | Note |
+|---|---|---|
+| .NET SDK | 10.0.401 | `global.json`, `rollForward: latestFeature` |
+| MongoDB.Driver | 3.13.0 | latest stable |
+| xunit.v3 | 4.0.2 | current xUnit line |
+| Microsoft.NET.Test.Sdk | 18.11.0 | |
+| Microsoft.Extensions.AI / .OpenAI | 10.11.0 | Parts 3B/4 |
+| Microsoft.Extensions.VectorData.Abstractions | 10.11.0 | stable |
+| Microsoft.Agents.AI | 1.27.0 | stable, 2026-10-30 |
+| Microsoft.SemanticKernel.Connectors.MongoDB | 1.74.0-preview | **no stable release exists** |
+
+All pinned centrally in `Directory.Packages.props`.
+
+### Solution format
+
+.NET 10's `dotnet new sln` produces `SantasWorkshop.slnx` (the XML format), not `.sln`.
+
+---
+
+## Still unverified
+
+Things to confirm before the part that depends on them ships.
+
+- [ ] Gemini free-tier RPM/RPD figures, and which model ID is on the free tier. *(Part 4)*
+- [ ] Whether `voyage-3.5` is free-tier eligible today, and its dimension count. *(Part 3B)*
+- [ ] Whether `MongoVectorStore` creates the Atlas vector index itself or needs a
+      pre-existing one — the docs do not say. *(Part 4A)*
+- [ ] Whether a newer `Microsoft.SemanticKernel.Connectors.MongoDB` preview has shipped
+      past `1.74.0-preview`. *(Part 4A)*
+- [ ] That VectorData `10.11.0` resolves cleanly for both the SK connector (`>= 10.1.0`)
+      and Agent Framework (`>= 10.10.0`). *(Part 4)*
+- [ ] **The repo URL in `LandingPage/wwwroot/appsettings.json` is a guess**
+      (`github.com/LuceCarter/12-days-of-mongodbmas-csharp`). Every link on the landing
+      page is built from it, so it needs correcting the moment the repo is pushed.
+      *(Landing page)*
+- [ ] **Does the CRUD Overview (C# edition) assessment show Builders or LINQ in its
+      questions?** We lead with Builders because it maps 1:1 onto the shell syntax the
+      other nine badges use. Both styles appear in Part 1 either way — only the ordering
+      changes — so this is a find-and-replace while Part 1 is unreleased, and a rewrite
+      afterwards. Worth asking the EDU team before Dec 1. *(Part 1)*
+
+---
+
+## Resolved
+
+### Naming (2026-11-03)
+The **repo** is "12 Days of MongoDBmas — C#". **Santa's Workshop** is the name of the
+*app* the learner builds, so it is what appears in the landing page title, the doctor
+banner, the devcontainer name and the story text. Both names are correct, in their own
+places.
+
+### Stretch badges stay in "Level up" (2026-11-03)
+Indexing Design Fundamentals, Relational to Document Model and Vector Search Performance
+remain optional "Level up" sections rather than first-class parts. They keep their rows
+in `docs/objective-map.md` so coverage is still tracked, but they do not count against
+the 30–60 minute core path.
+
+---
+
+## 2026-11-09 — Landing page
+
+### Content lives in `appsettings.json`, not in markup
+
+Every external link, badge URL, part summary, release date and resource on the landing
+page is loaded from `LandingPage/wwwroot/appsettings.json`. This is what makes "badge
+links stay as placeholders in one config file" literally true rather than approximately
+true: no `.razor` file contains a badge URL, a repo URL or a release date.
+
+The exception, deliberately: five vendor links in the Setup page's prose (the .NET SDK,
+Docker Desktop, Atlas signup, Voyage, Google AI Studio). They are stable, they read as
+part of the sentence around them, and hoisting them into config would make the copy
+harder to edit for no benefit.
+
+Badge URLs are `REPLACE_ME/...`. The `Badge.IsPlaceholder` check drives the UI, so an
+unfilled badge renders as a dashed "link coming soon" chip instead of a dead link —
+the page can go live before MongoDB EDU hands over the real URLs.
+
+Releasing a part is a one-line change: `"Available": true`.
+
+### Config is loaded with source-generated JSON, not `IConfiguration`
+
+Published WebAssembly output is trimmed, and reflection-based `System.Text.Json` is
+unreliable once it is. `ChallengeConfigContext` is a `JsonSerializerContext`, so
+binding survives trimming. The config is fetched in `Program.cs` *before* the host
+runs, so no component ever has to render a half-configured page.
+
+### No Bootstrap
+
+The template ships it; this page is four routes and `wwwroot/css/app.css` is smaller
+than Bootstrap's grid alone. Hand-written CSS with custom properties, a
+`prefers-color-scheme: dark` block, a skip link, visible focus rings and a
+`prefers-reduced-motion` guard.
+
+### `InvariantGlobalization` is on
+
+The page is English-only and formats nothing by culture, so the ICU data was pure
+download weight. Publish output went from **9.0 MB to 6.5 MB** uncompressed.
+
+For context: that is still a heavy first load for a static signpost — it is the floor
+for Blazor WASM. The Pages workflow installs the `wasm-tools` workload, which relinks
+the runtime and trims it further. Noting the trade-off rather than hiding it; Blazor
+was a deliberate choice and showing it off is part of the point.
+
+### GitHub Pages: two non-obvious steps
+
+- **`<base href>`** is `/` in the repo so `dotnet run` works, and the workflow rewrites
+  it to `/<repo-name>/` at publish time. If `index.html`'s base tag is reformatted, the
+  `sed` in `pages.yml` must change with it.
+- **`404.html` is a copy of `index.html`.** Pages serves it for unknown paths, which
+  hands routes like `/setup` back to the Blazor router instead of 404ing on refresh.
+
+`.nojekyll` is committed so nothing strips the `_framework` directory.
+
+---
+
+## 2026-11-09 — CI
+
+### The solutions are extracted from `SOLUTIONS.md`, not kept on a branch
+
+**This replaces the `solutions` branch in the plan.** Flagging it as a change rather
+than quietly swapping it, because the plan said otherwise.
+
+A branch carrying completed `Starter/` projects has one failure mode and it is a
+guaranteed one: someone fixes a bug in the branch and not in the markdown, or vice
+versa, and the file learners are told to read stops being the file that passes.
+Nothing catches it, because nothing compares them.
+
+So CI does this instead, in `.github/scripts/apply-solutions.py`:
+
+1. Parse `part1-inventory/SOLUTIONS.md`.
+2. For each `<details>` block, take the **first** ```csharp fence — the canonical
+   answer. Later fences are alternatives and deliberate anti-examples (Step 3's
+   `ReplaceOneAsync`, Step 9's raw BSON and LINQ forms) and are skipped.
+3. Brace-match the matching method in `Starter/` and swap the whole declaration.
+   Regex can't do this: the bodies contain parentheses, braces and comments.
+4. Fail loudly if any solution has no matching method, or any method is left over.
+
+The published documentation is therefore executable. If the markdown is wrong, CI is
+red. A `solutions` branch can still be added later for people who want to clone one,
+but it would be generated from this, not maintained by hand.
+
+### The red/green assertion is the point of the job
+
+CI asserts **both** directions for Part 1:
+
+- The starter code must fail. A part whose tests pass before the learner writes
+  anything is broken, and without this check nobody finds out until someone is
+  halfway through it.
+- The extracted solutions must pass.
+
+Exit code precision matters here. Microsoft Testing Platform returns **0** for all
+passed and **2** for "at least one test failed". The job requires exactly 2 — a crash,
+a build break or zero tests discovered all exit differently, and none of them are a
+healthy red. `dotnet build` runs as its own step first, so by the time the test steps
+run, a non-zero exit can only mean failing tests.
+
+A final step checks `git diff` touched nothing outside `Starter/`, so the applier can't
+wander into the tests and make the green run meaningless.
+
+### Atlas Local as a GitHub Actions service container
+
+Same pinned image as `docker-compose.yml`, so CI and a learner's machine run the same
+MongoDB. `directConnection=true` in the connection string is what makes it work: the
+replica set advertises itself as `mongodb`, which doesn't resolve from the runner host,
+and direct connection skips topology discovery and talks to the mapped port.
+
+CI waits for readiness by running **`tools/doctor`** in a retry loop rather than
+sleeping. It is what learners are told to run first, it checks exactly what the tests
+are about to need (connectivity, replica set, mongot), and running it on every build
+means the doctor itself can't rot. Missing API keys are warnings, not failures, so a
+keyless CI run is still green.
+
+### The landing page gets its own CI job
+
+A publish plus four assertions on the output, including that `index.html` still
+contains the exact `<base href="/" />` line that `pages.yml` rewrites with `sed`. That
+coupling is the kind of thing that breaks silently six weeks later; now it breaks on
+the pull request instead.

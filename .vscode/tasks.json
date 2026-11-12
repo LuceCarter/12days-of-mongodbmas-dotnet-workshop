@@ -1,0 +1,42 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": ["build", "${workspaceFolder}/SantasWorkshop.slnx"],
+            "problemMatcher": "$msCompile",
+            "group": { "kind": "build", "isDefault": true }
+        },
+        {
+            // The landing page is Blazor WebAssembly: `dotnet run` starts a small
+            // dev server that serves it to your browser. Running the .dll directly
+            // cannot work — see the comment in launch.json.
+            "label": "run landing page",
+            "command": "dotnet",
+            "type": "process",
+            "args": ["run", "--project", "${workspaceFolder}/LandingPage"],
+            "problemMatcher": "$msCompile",
+            "isBackground": true,
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        },
+        {
+            "label": "doctor (check my environment)",
+            "command": "dotnet",
+            "type": "process",
+            "args": ["run", "--project", "${workspaceFolder}/tools/doctor"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        },
+        {
+            "label": "test Part 1",
+            "command": "dotnet",
+            "type": "process",
+            "args": ["test", "${workspaceFolder}/part1-inventory/Tests"],
+            "problemMatcher": "$msCompile",
+            "group": { "kind": "test", "isDefault": true },
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        }
+    ]
+}

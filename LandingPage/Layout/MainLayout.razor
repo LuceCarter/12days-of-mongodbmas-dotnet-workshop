@@ -1,0 +1,34 @@
+@inherits LayoutComponentBase
+@inject ChallengeConfig Config
+
+<div class="site">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="wordmark" href="">🎄 Santa's <span>Workshop</span></a>
+
+            <nav class="site-nav" aria-label="Main">
+                <NavLink href="" Match="NavLinkMatch.All">Home</NavLink>
+                <NavLink href="parts">The challenges</NavLink>
+                <NavLink href="setup">Setup</NavLink>
+                <NavLink href="resources">Resources &amp; FAQ</NavLink>
+                <a href="@Config.Repo" target="_blank" rel="noopener">GitHub ↗</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main" id="main">
+        @Body
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap">
+            <p>
+                Built with MongoDB and .NET. The code lives on
+                <a href="@Config.Repo" target="_blank" rel="noopener">GitHub</a> —
+                issues and pull requests are welcome.
+            </p>
+        </div>
+    </footer>
+</div>

@@ -1,0 +1,105 @@
+@page "/"
+@inject ChallengeConfig Config
+
+<PageTitle>Santa's Workshop — 12 Days of MongoDBmas (C#)</PageTitle>
+
+<section class="hero">
+    <div class="wrap">
+        <p class="eyebrow">12 Days of MongoDBmas · C# edition</p>
+        <h1>Build Santa's Workshop, learn MongoDB</h1>
+        <p>
+            Five hands-on challenges that take you from your first <code>InsertOne()</code>
+            to a working AI agent. One story, one growing dataset, and a
+            <strong>free MongoDB skill badge</strong> at the end of every part.
+        </p>
+        <p>
+            No prior MongoDB experience needed. Work through it whenever you like —
+            this isn't a daily puzzle, and nothing expires.
+        </p>
+
+        <div class="actions">
+            <a class="btn btn--primary" href="setup">Get set up</a>
+            <a class="btn btn--ghost" href="parts">See the challenges</a>
+        </div>
+    </div>
+</section>
+
+<div class="wrap">
+    <h2>How it works</h2>
+
+    <ol class="steps">
+        <li>
+            <h3>Get your environment running</h3>
+            <p>
+                Open the repo in GitHub Codespaces and everything is waiting for you.
+                Prefer to work locally? Docker or a free Atlas cluster both work.
+                <a href="setup">The setup page</a> walks through all three.
+            </p>
+        </li>
+        <li>
+            <h3>Read the part's README</h3>
+            <p>
+                It tells the story, then walks you through numbered steps. Each step
+                teaches one thing and maps to one method you're about to write.
+            </p>
+        </li>
+        <li>
+            <h3>Fill in the <code>// TODO</code>s</h3>
+            <p>
+                Every part has a <code>Starter/</code> project with the method signatures
+                already there and the bodies left to you.
+            </p>
+        </li>
+        <li>
+            <h3>Run the tests until they're green</h3>
+            <p>
+                They start red. When they pass, you've got it — and you're ready for the
+                badge. Stuck? Every part has a <code>SOLUTIONS.md</code>, and using it
+                isn't cheating.
+            </p>
+            <pre><code>dotnet test part1-inventory/Tests</code></pre>
+        </li>
+    </ol>
+
+    <h2>What you'll build</h2>
+
+    <ul class="cards">
+        @foreach (var part in Config.Parts)
+        {
+            <li>
+                <div class="card">
+                    <p class="card__step">Part @part.Id · @part.Level</p>
+                    <h3>@part.Title</h3>
+                    <p>@part.Summary</p>
+                    <p>
+                        @if (part.Available)
+                        {
+                            <span class="tag tag--live">Available now</span>
+                        }
+                        else
+                        {
+                            <span class="tag tag--date">Releases @part.Released</span>
+                        }
+                    </p>
+                </div>
+            </li>
+        }
+    </ul>
+
+    <p style="margin-top:1.5rem"><a href="parts">Full details for every part →</a></p>
+
+    <div class="callout">
+        <p>
+            <strong>About the badges.</strong> Each part lines up with a free MongoDB
+            skill badge. The badges assess MongoDB <em>concepts</em> — they aren't a C#
+            exam, and they don't look at your code. You don't have to do the exercises
+            to take one, but they teach exactly what the assessments cover.
+        </p>
+        <p>
+            Every part's README ends with a checklist mapping each badge objective to
+            the step that teaches it, plus a <em>"From C# to the badge"</em> table
+            translating the C# you just wrote into the shell and Atlas UI syntax the
+            assessment uses.
+        </p>
+    </div>
+</div>

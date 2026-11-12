@@ -1,0 +1,86 @@
+@page "/parts"
+@inject ChallengeConfig Config
+
+<PageTitle>The challenges — Santa's Workshop</PageTitle>
+
+<div class="wrap">
+    <h1>The challenges</h1>
+    <p>
+        Five parts, released through December. Each one takes <strong>30–60 minutes</strong>
+        on the core path, and each has a <em>Level up</em> section if you want to go further.
+    </p>
+    <p>
+        They're designed to be done in order — the dataset grows as you go — but nothing
+        stops you jumping to the part you're interested in.
+    </p>
+
+    <ul class="parts">
+        @foreach (var part in Config.Parts)
+        {
+            <li>
+                <article class="part @(part.Available ? "" : "part--soon")">
+                    <div class="part__head">
+                        <h3>@part.Heading</h3>
+                    </div>
+
+                    <p>@part.Summary</p>
+
+                    <div class="part__meta">
+                        @if (part.Available)
+                        {
+                            <span class="tag tag--live">Available now</span>
+                        }
+                        else
+                        {
+                            <span class="tag tag--date">Releases @part.Released</span>
+                        }
+                        <span class="tag">@part.Level</span>
+                        <span class="tag">30–60 minutes</span>
+                    </div>
+
+                    <h4 style="margin:0 0 .5rem;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)">
+                        What it covers
+                    </h4>
+                    <ul class="part__teaches">
+                        @foreach (var item in part.Teaches)
+                        {
+                            <li>@item</li>
+                        }
+                    </ul>
+
+                    <div class="part__links">
+                        @if (part.Available)
+                        {
+                            <a class="btn btn--primary" href="@Config.ReadmeUrl(part)" target="_blank" rel="noopener">
+                                Start Part @part.Id ↗
+                            </a>
+                        }
+                        @foreach (var badge in part.Badges)
+                        {
+                            <BadgeLink Badge="badge" />
+                        }
+                    </div>
+                </article>
+            </li>
+        }
+    </ul>
+
+    <h2>Level up badges</h2>
+    <p>
+        Three more badges are covered by the optional <em>Level up</em> sections. They
+        don't count against the 30–60 minutes, and you can skip them entirely.
+    </p>
+    <div class="part__links" style="margin-top:1rem">
+        @foreach (var badge in Config.LevelUpBadges)
+        {
+            <BadgeLink Badge="badge" />
+        }
+    </div>
+
+    <div class="callout">
+        <p>
+            <strong>Ready to start?</strong> Part 1 needs about five minutes of setup.
+            <a href="setup">Here's how.</a>
+        </p>
+    </div>
+</div>

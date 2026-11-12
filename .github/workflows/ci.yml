@@ -1,0 +1,141 @@
+# Continuous integration for 12 Days of MongoDBmas — C#
+#
+# The important job here isn't "does it compile". It's the red/green proof:
+#
+#   1. The starter code must FAIL every test. If a part ships with tests that
+#      pass before the learner writes anything, the exercise is broken and
+#      nobody finds out until someone is halfway through it.
+#   2. The code published in SOLUTIONS.md must PASS every test. Not a copy of it
+#      on a branch — the actual markdown, extracted at build time, so the docs
+#      cannot drift away from working code.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  part1:
+    name: Part 1 — red on starter, green on solutions
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        # Atlas Local bundles mongod and mongot, so $search and $vectorSearch
+        # work here exactly as they do on a learner's machine. Pinned to match
+        # docker-compose.yml — if you bump one, bump the other.
+        image: mongodb/mongodb-atlas-local:8.0.15
+        ports:
+          - 27017:27017
+        env:
+          MONGODB_INITDB_ROOT_USERNAME: workshop
+          MONGODB_INITDB_ROOT_PASSWORD: workshop
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 12
+          --health-start-period 40s
+
+    env:
+      # The replica set advertises itself as "mongodb", which doesn't resolve from
+      # the runner host — directConnection skips topology discovery and talks to
+      # the mapped port instead. Same reason the local default uses it.
+      MONGODB_URI: mongodb://workshop:workshop@localhost:27017/?directConnection=true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        # Done before the test steps on purpose: once this passes, a non-zero
+        # exit from `dotnet test` can only mean failing tests, never a broken build.
+        run: dotnet build --configuration Release
+
+      - name: Wait for MongoDB, and smoke-test the doctor
+        # The doctor is what learners are told to run first, so CI runs it first
+        # too. It checks connectivity, the replica set and mongot availability —
+        # exactly what the tests are about to need.
+        run: |
+          for attempt in $(seq 1 10); do
+            if dotnet run --project tools/doctor --configuration Release --no-build; then
+              exit 0
+            fi
+            echo "Not ready yet (attempt $attempt). Waiting..."
+            sleep 10
+          done
+          echo "::error::MongoDB never became ready, or the doctor is reporting a failure."
+          exit 1
+
+      - name: The starter code must fail every test
+        run: |
+          set +e
+          dotnet test part1-inventory/Tests --configuration Release --no-build
+          status=$?
+          set -e
+
+          # Microsoft Testing Platform: 0 = all passed, 2 = at least one test failed.
+          # Anything else (crash, no tests discovered, bad arguments) is its own bug
+          # and must not be mistaken for a healthy red.
+          if [ "$status" -eq 0 ]; then
+            echo "::error::Part 1 passes without the learner writing anything. The exercise is broken."
+            exit 1
+          elif [ "$status" -ne 2 ]; then
+            echo "::error::Expected failing tests (exit 2) but the test run exited $status."
+            exit 1
+          fi
+
+          echo "Starter code is red, as it should be."
+
+      - name: Paste in the published solutions
+        run: python3 .github/scripts/apply-solutions.py part1-inventory
+
+      - name: The published solutions must pass every test
+        run: |
+          dotnet build --configuration Release
+          dotnet test part1-inventory/Tests --configuration Release --no-build
+
+      - name: Confirm nothing but the starter changed
+        # Cheap guard against the applier wandering into the tests or shared code
+        # and quietly making the green run meaningless.
+        run: |
+          git diff --name-only
+          stray=$(git diff --name-only | grep -v '^part1-inventory/Starter/' || true)
+          if [ -n "$stray" ]; then
+            echo "::error::apply-solutions.py modified files outside Starter/: $stray"
+            exit 1
+          fi
+
+  landing-page:
+    name: Landing page builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Catches a broken landing page on the PR rather than on the deploy.
+      - name: Publish
+        run: dotnet publish LandingPage/SantasWorkshop.LandingPage.csproj -c Release -o publish
+
+      - name: Check the published output is complete
+        run: |
+          test -f publish/wwwroot/index.html
+          test -f publish/wwwroot/appsettings.json
+          test -d publish/wwwroot/_framework
+          grep -q '<base href="/" />' publish/wwwroot/index.html \
+            || { echo "::error::index.html no longer has the base href that pages.yml rewrites."; exit 1; }

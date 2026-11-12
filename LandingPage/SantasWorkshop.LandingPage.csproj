@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <!--
+    The landing page is deliberately standalone: no server, no database, no auth.
+    It builds to static files and is published to GitHub Pages by
+    .github/workflows/pages.yml. Nothing here talks to MongoDB.
+
+    Package versions come from Directory.Packages.props (central package
+    management), which is why there are no Version attributes below.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+
+    <!--
+      The page is English-only and formats no dates or numbers by culture, so the
+      ICU data is pure download weight. Dropping it saves roughly half a megabyte
+      off the first load. If this page ever needs localising, delete this line.
+    -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

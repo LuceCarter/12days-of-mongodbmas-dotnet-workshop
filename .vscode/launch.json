@@ -1,0 +1,45 @@
+{
+    // Launch configurations for this repo.
+    //
+    // The landing page needs its own entry. Blazor WebAssembly ships the .NET
+    // runtime *inside the browser*, so its runtimeconfig.json lists
+    // "includedFrameworks" and no "framework" — there is no macOS or Linux host
+    // for it. If VS Code falls back to a generic .NET launch it tries to run the
+    // .dll directly and dies with:
+    //
+    //     The library 'libhostpolicy.dylib' required to execute the application
+    //     was not found ... Failed to run as a self-contained app.
+    //
+    // That is not a broken build. It just means the wrong launcher was used.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Landing page",
+            "type": "blazorwasm",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/LandingPage",
+            "url": "http://localhost:5054"
+        },
+        {
+            "name": "Doctor (environment check)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/tools/doctor/bin/Debug/net10.0/doctor.dll",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Doctor (deep check — builds a real vector index)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/tools/doctor/bin/Debug/net10.0/doctor.dll",
+            "args": ["--deep"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        }
+    ]
+}

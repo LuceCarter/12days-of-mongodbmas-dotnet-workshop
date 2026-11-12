@@ -1,0 +1,44 @@
+# Santa's Workshop — local MongoDB with Search and Vector Search.
+#
+# This is a MongoDB Atlas Local deployment: mongod and mongot (the search process)
+# in one container. It gives you $search and $vectorSearch on your laptop, with no
+# Atlas account needed.
+#
+# Start it with:   docker compose up -d
+# Check it with:   dotnet run --project tools/doctor
+# Stop it with:    docker compose down          (your data survives)
+# Wipe it with:    docker compose down -v       (deletes data AND search indexes)
+
+services:
+  mongodb:
+    image: mongodb/mongodb-atlas-local:8.0.15
+    container_name: santas-workshop-mongodb
+    # Required: the single-node replica set advertises itself under this hostname.
+    # Change it and the replica set will not come up.
+    hostname: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGODB_INITDB_ROOT_USERNAME: workshop
+      MONGODB_INITDB_ROOT_PASSWORD: workshop
+      # Send mongot's logs to the container log so `docker compose logs` shows
+      # search index problems instead of hiding them inside the container.
+      MONGOT_LOG_FILE: /dev/stderr
+      RUNNER_LOG_FILE: /dev/stderr
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-config:/data/configdb
+      # Do not remove this one. Search and Vector Search index definitions live
+      # here, not in /data/db. Without it your indexes vanish on every restart.
+      - mongodb-mongot:/data/mongot
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 40s
+
+volumes:
+  mongodb-data:
+  mongodb-config:
+  mongodb-mongot:

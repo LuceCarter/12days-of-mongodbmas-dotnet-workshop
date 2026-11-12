@@ -1,0 +1,15 @@
+bin/
+obj/
+*.user
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+LandingPage/wwwroot/appsettings.Development.json
+.env
+*.received.*
+TestResults/
+publish/

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Santa's Workshop — 12 Days of MongoDBmas (C#)</title>
+    <meta name="description" content="Five hands-on C# challenges that take you from your first InsertOne to a working AI agent, with a free MongoDB skill badge at the end of every part." />
+    <meta name="color-scheme" content="light dark" />
+
+    <meta property="og:title" content="Santa's Workshop — 12 Days of MongoDBmas (C#)" />
+    <meta property="og:description" content="Five hands-on C# challenges, from CRUD to AI agents. Free, self-paced, and nothing expires." />
+    <meta property="og:type" content="website" />
+
+    <!--
+        Deployed to a GitHub Pages project subpath, so the base href must be
+        "/<repo-name>/" there and "/" when running locally.
+        .github/workflows/pages.yml rewrites this exact line at publish time.
+        If you change it, change the sed in that workflow too.
+    -->
+    <base href="/" />
+
+    <link rel="preload" id="webassembly" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="SantasWorkshop.LandingPage.styles.css" rel="stylesheet" />
+    <script type="importmap"></script>
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        Something went wrong loading the page.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+</body>
+
+</html>

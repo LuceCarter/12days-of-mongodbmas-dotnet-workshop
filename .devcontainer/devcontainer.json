@@ -1,0 +1,28 @@
+{
+  "name": "Santa's Workshop (MongoDB + C#)",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.extend.yml"],
+  "service": "workspace",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": { "version": "10.0" },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "mongodb.mongodb-vscode"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "SantasWorkshop.slnx"
+      }
+    }
+  },
+  "forwardPorts": [27017, 5054],
+  "portsAttributes": {
+    "27017": { "label": "MongoDB", "onAutoForward": "silent" },
+    "5054": { "label": "Landing page" }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode"
+}

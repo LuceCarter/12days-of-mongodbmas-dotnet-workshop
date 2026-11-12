@@ -1,0 +1,16 @@
+# Adds the dev container itself alongside the MongoDB service defined in the
+# root docker-compose.yml. Running the app locally without a dev container?
+# You only need the root file.
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+    volumes:
+      - ../..:/workspaces:cached
+      - ..:/workspace:cached
+    command: sleep infinity
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      # Inside the dev container, MongoDB is reachable by service name, not localhost.
+      MONGODB_URI: mongodb://workshop:workshop@mongodb:27017/?directConnection=true

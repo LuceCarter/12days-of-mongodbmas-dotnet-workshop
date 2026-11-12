@@ -1,0 +1,22 @@
+@*
+    One badge. Renders a real link once the URL is filled in, and an honest
+    "coming soon" chip while it is still a placeholder in appsettings.json —
+    a dead link on a launch page is worse than no link.
+*@
+
+@if (Badge.IsPlaceholder)
+{
+    <span class="tag tag--badge" title="The badge link will be added here before this part is released.">
+        🏅 @Badge.Name — link coming soon
+    </span>
+}
+else
+{
+    <a class="tag tag--badge" href="@Badge.Url" target="_blank" rel="noopener">
+        🏅 @Badge.Name ↗
+    </a>
+}
+
+@code {
+    [Parameter, EditorRequired] public Badge Badge { get; set; } = default!;
+}

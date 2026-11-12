@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/LandingPage/">
+    <Project Path="LandingPage/SantasWorkshop.LandingPage.csproj" />
+  </Folder>
+  <Folder Name="/part1-inventory/" />
+  <Folder Name="/part1-inventory/Starter/">
+    <Project Path="part1-inventory/Starter/Part1.Starter.csproj" />
+  </Folder>
+  <Folder Name="/part1-inventory/Tests/">
+    <Project Path="part1-inventory/Tests/Part1.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/SantasWorkshop.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tools/" />
+  <Folder Name="/tools/doctor/">
+    <Project Path="tools/doctor/SantasWorkshop.Doctor.csproj" />
+  </Folder>
+</Solution>

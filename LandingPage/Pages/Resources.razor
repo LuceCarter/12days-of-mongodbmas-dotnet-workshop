@@ -1,0 +1,147 @@
+@page "/resources"
+@inject ChallengeConfig Config
+
+<PageTitle>Resources &amp; FAQ — Santa's Workshop</PageTitle>
+
+<div class="wrap">
+    <h1>Resources &amp; FAQ</h1>
+
+    <h2>Frequently asked</h2>
+
+    <div class="faq">
+        <details open>
+            <summary>Do I have to do the exercises to claim a badge?</summary>
+            <p>
+                No. The badge assessments are open to anyone, free, and you can take
+                any of them whenever you like — the links are right there on
+                <a href="parts">the challenges page</a>.
+            </p>
+            <p>
+                What the exercises give you is the practice. The badges test the
+                concepts these parts teach, so doing the part first tends to make the
+                assessment a formality rather than a guess.
+            </p>
+        </details>
+
+        <details>
+            <summary>Do I need to know MongoDB already?</summary>
+            <p>
+                No. Part 1 starts at <code>InsertOne()</code> and assumes nothing. It
+                does assume you're comfortable in C# — you'll be writing methods, not
+                copying files around.
+            </p>
+            <p>
+                If you're coming from SQL, the Part 1 README has collapsible boxes that
+                translate each concept from the relational world as you go.
+            </p>
+        </details>
+
+        <details>
+            <summary>Is this a daily advent calendar? Will I fall behind?</summary>
+            <p>
+                No, and no. Parts are released through December, but it's
+                self-paced and <strong>evergreen</strong> — do it in February if that
+                suits you better. Nothing expires and nothing is scored.
+            </p>
+        </details>
+
+        <details>
+            <summary>How long does each part take?</summary>
+            <p>
+                About <strong>30 to 60 minutes</strong> for the core path. Each part
+                also has a <em>Level up</em> section that goes deeper; that's genuinely
+                optional and isn't counted in the time.
+            </p>
+        </details>
+
+        <details>
+            <summary>Do I need a credit card, or a paid MongoDB account?</summary>
+            <p>
+                No. The local Docker setup needs no account at all, and the Atlas free
+                tier needs no card. The two AI services used in Parts 3B and 4 — Voyage
+                AI and Google Gemini — both have free tiers that don't ask for one either.
+            </p>
+        </details>
+
+        <details>
+            <summary>Can I do the parts out of order?</summary>
+            <p>
+                Mostly. The dataset grows as you go and later parts assume the earlier
+                concepts, but each part ships with its own seed data, so jumping
+                straight to Part 3B will work. If you're new to MongoDB, in order is
+                much less effort.
+            </p>
+        </details>
+
+        <details>
+            <summary>I'm stuck on a step. Is using SOLUTIONS.md cheating?</summary>
+            <p>
+                No. Every part has a <code>SOLUTIONS.md</code> with the answer to each
+                step, plus an explanation of <em>why</em> and the alternative ways of
+                writing it. Read it, then come back and write it yourself.
+            </p>
+        </details>
+
+        <details>
+            <summary>Why C#, when most MongoDB material is JavaScript or Python?</summary>
+            <p>
+                Exactly that. The badge assessments mostly use MongoDB Shell syntax, so
+                each part ends with a <em>"From C# to the badge"</em> table translating
+                what you wrote into what the assessment will show you.
+            </p>
+        </details>
+
+        <details>
+            <summary>Something is broken. Where do I go?</summary>
+            <p>
+                Run <code>dotnet run --project tools/doctor</code> first — it diagnoses
+                most problems and tells you the fix. After that, the
+                <a href="@(Config.Repo)/blob/main/docs/setup.md" target="_blank" rel="noopener">troubleshooting section</a>,
+                and then
+                <a href="@(Config.Repo)/issues" target="_blank" rel="noopener">open an issue</a>.
+                If a step confused you, that's a bug in the material and worth reporting.
+            </p>
+        </details>
+    </div>
+
+    <h2>Useful links</h2>
+
+    <ul class="links">
+        @foreach (var resource in Config.Resources)
+        {
+            <li>
+                <a href="@resource.Url" target="_blank" rel="noopener">@resource.Name ↗</a>
+                <span>@resource.Note</span>
+            </li>
+        }
+    </ul>
+
+    <h2>Inside the repo</h2>
+
+    <ul class="links">
+        <li>
+            <a href="@(Config.Repo)/blob/main/docs/setup.md" target="_blank" rel="noopener">docs/setup.md ↗</a>
+            <span>Full setup instructions for all three routes, plus troubleshooting.</span>
+        </li>
+        <li>
+            <a href="@(Config.Repo)/blob/main/docs/csharp-to-badge.md" target="_blank" rel="noopener">docs/csharp-to-badge.md ↗</a>
+            <span>C# ↔ shell, Compass and Atlas UI translation tables for every part.</span>
+        </li>
+        <li>
+            <a href="@(Config.Repo)/blob/main/docs/objective-map.md" target="_blank" rel="noopener">docs/objective-map.md ↗</a>
+            <span>Every badge objective, mapped to the step that teaches it and the test that proves it.</span>
+        </li>
+        <li>
+            <a href="@(Config.Repo)/blob/main/DECISIONS.md" target="_blank" rel="noopener">DECISIONS.md ↗</a>
+            <span>Why things are built the way they are — including the bits that surprised us.</span>
+        </li>
+    </ul>
+
+    <div class="callout">
+        <p>
+            <strong>Found a mistake, or a step that didn't make sense?</strong>
+            <a href="@(Config.Repo)/issues" target="_blank" rel="noopener">Open an issue</a>.
+            Confusing explanations are bugs.
+        </p>
+    </div>
+</div>
