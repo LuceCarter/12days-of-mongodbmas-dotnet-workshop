@@ -17,6 +17,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Runners are pinned to a specific Ubuntu release rather than `ubuntu-latest`, for the
+# same reason every package version here is pinned: `latest` moves under you. GitHub is
+# migrating `ubuntu-latest` to 26.04, which would change the runner without a commit.
+# Moving to ubuntu-26.04 is a deliberate step — bump it here and in pages.yml together.
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -24,7 +29,7 @@ concurrency:
 jobs:
   part1:
     name: Part 1 — red on starter, green on solutions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       mongodb:
@@ -51,10 +56,10 @@ jobs:
       MONGODB_URI: mongodb://workshop:workshop@localhost:27017/?directConnection=true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
@@ -119,12 +124,12 @@ jobs:
 
   landing-page:
     name: Landing page builds
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
