@@ -23,7 +23,16 @@
 
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <!--
+        The MongoDB leaf in a Santa hat. Regenerate with favicon-src/build-favicons.py.
+        Paths are relative so they resolve under <base href> on the Pages sub-path.
+        favicon.ico covers older browsers (and asks for the 48px entry on a Windows shortcut);
+        the PNGs are what modern browsers actually choose.
+    -->
+    <link rel="icon" href="favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <script type="importmap"></script>
 </head>
 

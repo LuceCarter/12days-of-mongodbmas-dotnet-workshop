@@ -549,3 +549,36 @@ declares the markdown as `<Watch>` items. In `dotnet watch`'s default hot-reload
 enough: it logs `File updated` then `No managed code changes to apply` and does nothing. With
 `--no-hot-reload` the same edit rebuilt and refreshed the served copy in about five seconds. Documented
 in `LandingPage/README.md`.
+
+### The favicon: MongoDB's leaf in a Santa hat
+
+The icon uses MongoDB's **official leaf artwork** (Spring Green, from the brand asset library the
+`mongodb-deck` skill carries) rather than a hand-drawn approximation, with the hat drawn as vector
+shapes on top. The leaf stays unmodified; only the hat is ours. It sits on a rounded tile in the
+site's evergreen so it stays readable on both light and dark browser tabs — checked at the real 16
+and 32 pixel sizes, enlarged without smoothing and in a mock tab. The upright leaf is deliberate:
+tilting the mark would use more of the square, but it is a logo.
+
+Shipped: `favicon.ico` (16/32/48), `favicon-16.png`, `favicon-32.png`, `apple-touch-icon.png`
+(square corners; iOS rounds its own), plus `favicon.png` and `icon-192.png`, which were already there
+(the latter was the Blazor template's icon and is now ours). There is deliberately no SVG favicon: the
+leaf is a raster image, so an SVG would only wrap a PNG. Source, rebuild script and the editing notes
+are in `LandingPage/favicon-src/`.
+
+Things that went wrong while building it, in case they recur:
+
+- **`sips` always crops from the centre.** `--cropOffset` made no difference whichever side of the crop
+  I put it on, so the first 192px icon was a slice of the tile's far corner. The tell was files far too
+  small (245 bytes for a 64px icon). Fix: draw each icon in the *middle* of Chrome's 512px page, so a
+  centre crop returns exactly it.
+- **The leaf's tip poked through the hat.** Computed rather than eyeballed: the cone's left edge crossed
+  6 units below the tip and 11 units inside the leaf outline. The corrected curve clears the tip by 26
+  units and the outline by 37.
+- **A `#` in a file path ends a `file://` URL.** The repo lives in a folder called "… with C#", so a
+  hand-written `file://$PWD/…` URL silently loaded nothing. `Path.as_uri()` percent-encodes it. This will
+  matter again for any local test page.
+- **Chrome's headless window cannot go below ~500px**, so small icons are rendered in a big page and cropped.
+
+New tests (`IndexHtmlTests`): every relative file `index.html` links must exist in `wwwroot`; each icon's
+real pixel size, read from the PNG header, must match its name; the `.ico` must hold 16, 32 and 48 pixel
+images. Checked by planting a dead link and a 16px file named `favicon-32.png`.
