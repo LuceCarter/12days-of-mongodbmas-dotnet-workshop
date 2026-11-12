@@ -171,10 +171,6 @@ Things to confirm before the part that depends on them ships.
       past `1.74.0-preview`. *(Part 4A)*
 - [ ] That VectorData `10.11.0` resolves cleanly for both the SK connector (`>= 10.1.0`)
       and Agent Framework (`>= 10.10.0`). *(Part 4)*
-- [ ] **The repo URL in `LandingPage/wwwroot/appsettings.json` is a guess**
-      (`github.com/LuceCarter/12-days-of-mongodbmas-csharp`). Every link on the landing
-      page is built from it, so it needs correcting the moment the repo is pushed.
-      *(Landing page)*
 - [ ] **Does the CRUD Overview (C# edition) assessment show Builders or LINQ in its
       questions?** We lead with Builders because it maps 1:1 onto the shell syntax the
       other nine badges use. Both styles appear in Part 1 either way — only the ordering
@@ -318,3 +314,83 @@ A publish plus four assertions on the output, including that `index.html` still
 contains the exact `<base href="/" />` line that `pages.yml` rewrites with `sed`. That
 coupling is the kind of thing that breaks silently six weeks later; now it breaks on
 the pull request instead.
+
+### Snow, sleigh and the upside-down tree
+
+All of it is CSS. No JavaScript animation library, nothing that touches page content.
+
+- **Snow**: 48 flakes, generated once with a fixed seed so every load looks the same.
+  Each has a negative `animation-delay`, so the snow is already mid-fall when the page
+  appears rather than all starting at the top together. Flakes carry a hairline ring so
+  white-on-parchment stays visible in light mode. Fewer flakes under 600px.
+- **Sleigh**: one pass, 1.5s after load, ending off the right edge. It lives in the layout,
+  so it flies once per *visit*, not once per click between pages. Toggling snow off and on
+  again brings it back for another pass.
+- **Tree**: upside down, hanging from the top-right corner of the page by its trunk, with a
+  koala in a Santa hat clinging to the trunk among the top branches and a star on the bottom
+  tip. It overlaps the header and a little of the content below. `pointer-events: none`, so
+  it never blocks a click. On screens 1280px and wider it sits in the empty margin; below
+  that the header reserves room for it, so the nav wraps rather than running underneath.
+  (History: it started in the footer, then moved to the header; the koala started perched
+  *above* the trunk and was moved into the foliage — "in the tree" was the brief.)
+  Unlike the snow it is content, with an accessible name, not decoration.
+- **Motion is optional.** Auto-playing movement that lasts more than five seconds needs a
+  way to stop it (WCAG 2.2.2), so the header has a "❄ Snow" toggle, remembered in
+  `localStorage`. Anyone with `prefers-reduced-motion` gets no snow, no sleigh and no
+  toggle at all. The decorative layer is `aria-hidden` and `pointer-events: none`.
+
+### Two bugs found by looking at it
+
+The first real screenshots (headless Chrome — see below) caught two bugs in the earlier
+landing page work, neither visible in a build:
+
+- **Card grids stopped at ~730px** instead of filling the 1080px column. A blanket
+  `p, ul, ol { max-width: 68ch }` reading-width rule was also catching `ul.cards` and
+  `ul.parts`, which are layout, not prose.
+- **A focus box around every page's `<h1>`.** Blazor's `FocusOnNavigate` moves focus to the
+  heading so screen readers announce the new page, which is right — but the Blazor
+  template's `h1:focus { outline: none }` was lost when its CSS was replaced.
+
+### Verifying animation without a browser extension
+
+Headless Chrome (`--headless=new --screenshot`) works for layout but **freezes CSS
+animations at their first frame** under `--virtual-time-budget`, so the sleigh can't be
+caught mid-flight that way. The sleigh artwork was checked by temporarily pinning it
+on-screen; the *motion* itself (keyframes, timing, the 18s crossing) has not been seen
+running and should be eyeballed in a real browser.
+
+## 2026-11-12 — First deploy
+
+### Resolved: the repo URL
+
+The landing page's `Repo` was a guess; the real repository is
+`LuceCarter/12days-of-mongodbmas-dotnet-workshop`. Corrected in
+`LandingPage/wwwroot/appsettings.json`, which is still the only place it lives.
+
+Related fixes made while checking every link:
+
+- **The unused `Discussions` setting was removed.** No page referenced it, and Discussions
+  is switched off on the repo, so it was a dead link waiting to be wired up.
+- **The `cd` in the Setup page's clone instructions is derived** (`ChallengeConfig.RepoName`,
+  from the `Repo` URL) instead of typed out a second time. It had been hard-coded to a
+  folder name that did not match the repo.
+- **`index.html` no longer links `SantasWorkshop.LandingPage.styles.css`.** That is the
+  template's slot for scoped component CSS, which this page does not use, so the file
+  never existed and every page load logged a 404. If scoped `.razor.css` files are ever
+  added, put the link back.
+
+### Why the first deploy showed no styling
+
+It wasn't the CSS. The first run of `pages.yml` built correctly, then failed at
+`deploy-pages` with a 404 because GitHub Pages had not been enabled. Pages was then
+switched on with its source set to *Deploy from a branch*, so GitHub ran its own Jekyll
+build of the repo — the live site was the README rendered by Jekyll, which has no
+`css/app.css` and no `_framework/`. The Pages source must be **GitHub Actions**
+(Settings → Pages → Source), and the workflow re-run, since `pages.yml` only triggers on
+changes under `LandingPage/**`.
+
+### Link audit
+
+Every URL the landing page can render was requested: 16 live links, all resolving. The ten
+badge links are `REPLACE_ME` placeholders and render as "link coming soon" chips, so they
+are not requested. Re-run the audit when the real badge URLs arrive.

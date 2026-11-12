@@ -1,0 +1,105 @@
+@using System.Globalization
+@*
+    The festive layer: gentle snow, and Santa's sleigh crossing the bottom of the
+    screen once when the page loads.
+
+    All motion is CSS (see "Festive layer" in wwwroot/css/app.css). Nothing here
+    runs JavaScript, nothing can be clicked, and the whole layer is hidden from
+    assistive technology — it is decoration, not content.
+
+    Because this lives in the layout, it survives navigation between pages. The
+    sleigh therefore flies once per visit, not once per click. Turning snow off and
+    on again brings it back for another pass.
+*@
+
+<div class="festive @(Enabled ? "" : "festive--off")" aria-hidden="true">
+
+    <div class="snow">
+        @foreach (var style in flakes)
+        {
+            <span class="flake" style="@style"></span>
+        }
+    </div>
+
+    <div class="sleigh">
+        <svg class="sleigh__art" viewBox="0 0 360 106" focusable="false">
+            <defs>
+                @* One reindeer, drawn once and reused three times. Faces right, mid-gallop. *@
+                <symbol id="reindeer" viewBox="0 -12 72 72">
+                    <circle cx="8" cy="27" r="4" fill="#f3e6d3" />
+                    <path d="M22 38 L12 54 M44 38 L56 52" stroke="#6d4528" stroke-width="4" stroke-linecap="round" fill="none" />
+                    <ellipse cx="32" cy="30" rx="22" ry="11" fill="#8a5a3b" />
+                    <path d="M20 38 L9 51 M40 38 L52 54" stroke="#8a5a3b" stroke-width="4" stroke-linecap="round" fill="none" />
+                    <path d="M46 26 L57 13" stroke="#8a5a3b" stroke-width="9" stroke-linecap="round" />
+                    <ellipse cx="61" cy="12" rx="8" ry="5.5" fill="#8a5a3b" transform="rotate(15 61 12)" />
+                    <ellipse cx="57" cy="7" rx="2" ry="3.5" fill="#6d4528" transform="rotate(-20 57 7)" />
+                    <circle cx="62" cy="10" r="1.2" fill="#1c1208" />
+                    <circle cx="68" cy="14" r="2.2" fill="#2b1a10" />
+                    <path d="M58 6 L56 -3 M56 -3 L52 -8 M56 -3 L58 -9 M60 6 L63 -3 M63 -3 L67 -8"
+                          stroke="#5a3a22" stroke-width="1.8" stroke-linecap="round" fill="none" />
+                </symbol>
+            </defs>
+
+            @* Harness first, so it runs behind the reindeer. *@
+            <path d="M122 80 L290 84" stroke="#d9a441" stroke-width="1.5" fill="none" />
+
+            <use href="#reindeer" x="140" y="28" width="72" height="72" />
+            <use href="#reindeer" x="212" y="28" width="72" height="72" />
+            <use href="#reindeer" x="284" y="28" width="72" height="72" />
+
+            @* Rudolph, naturally. *@
+            <circle cx="352" cy="54" r="7" fill="#ff3b30" opacity=".25" />
+            <circle cx="352" cy="54" r="3.6" fill="#ff3b30" />
+
+            <g transform="translate(0 14)">
+                @* Sack of presents, then Santa, then the sleigh body over the top of both. *@
+                <ellipse cx="26" cy="38" rx="14" ry="13" fill="#c58b4a" />
+                <path d="M21 28 Q26 24 31 28" stroke="#8a5a3b" stroke-width="2" fill="none" />
+
+                <rect x="48" y="30" width="26" height="14" rx="6" fill="#d62f2f" />
+                <circle cx="61" cy="22" r="8" fill="#f2c9a0" />
+                <path d="M53 24 Q61 42 69 24 Q61 29 53 24 Z" fill="#ffffff" />
+                <circle cx="58" cy="21" r="1" fill="#2b1a10" />
+                <circle cx="64" cy="21" r="1" fill="#2b1a10" />
+                <path d="M52 19 Q55 -1 76 8 Q68 12 70 19 Z" fill="#d62f2f" />
+                <rect x="51" y="16" width="20" height="5" rx="2.5" fill="#ffffff" />
+                <circle cx="77" cy="8" r="3.5" fill="#ffffff" />
+
+                <path d="M10 40 L10 62 Q10 72 22 72 L96 72 Q112 72 114 52 L114 40 Z" fill="#b42318" />
+                <path d="M10 53 L113 53" stroke="#d9a441" stroke-width="3" />
+                <path d="M114 40 Q124 38 122 28" stroke="#d9a441" stroke-width="4" stroke-linecap="round" fill="none" />
+
+                <path d="M2 82 L108 82 Q126 82 126 66" stroke="#d9a441" stroke-width="4" stroke-linecap="round" fill="none" />
+                <path d="M28 72 L28 82 M88 72 L88 82" stroke="#d9a441" stroke-width="3" />
+            </g>
+        </svg>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Enabled { get; set; } = true;
+
+    // Built once for the whole app. The seed is fixed so the snow looks the same on
+    // every load — random enough to read as snow, stable enough not to be a surprise.
+    private static readonly string[] flakes = MakeFlakes(48);
+
+    private static string[] MakeFlakes(int count)
+    {
+        var random = new Random(1225);
+
+        static string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+        return Enumerable.Range(0, count).Select(_ =>
+        {
+            var left = random.NextDouble() * 100;               // % across the screen
+            var size = 3 + random.NextDouble() * 4;             // px
+            var duration = 10 + random.NextDouble() * 12;       // seconds to fall
+            var delay = random.NextDouble() * duration;         // negative: already mid-fall at load
+            var drift = (random.NextDouble() - .5) * 80;        // px of sideways wander
+            var opacity = .55 + random.NextDouble() * .4;
+
+            return $"left:{F(left)}%;--size:{F(size)}px;--dur:{F(duration)}s;" +
+                   $"--delay:-{F(delay)}s;--drift:{F(drift)}px;--op:{F(opacity)}";
+        }).ToArray();
+    }
+}

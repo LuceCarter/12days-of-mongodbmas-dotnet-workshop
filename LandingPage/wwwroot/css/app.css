@@ -109,6 +109,8 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
 }
 .skip-link:focus { left: 0; }
 
+h1[tabindex="-1"]:focus-visible { outline: none; }
+
 :focus-visible {
   outline: 3px solid var(--spring-ink);
   outline-offset: 2px;
@@ -225,6 +227,7 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
 /* --- Cards -------------------------------------------------------------- */
 
 .cards {
+  max-width: none;
   display: grid;
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
@@ -258,7 +261,7 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
 
 /* --- Part list ---------------------------------------------------------- */
 
-.parts { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1.25rem; }
+.parts { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1.25rem; max-width: none; }
 .parts > li { max-width: none; }
 
 .part {
@@ -440,3 +443,136 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
   z-index: 1000;
 }
 #blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: 1rem; top: .75rem; }
+
+/* =========================================================================
+   Festive layer — snow, sleigh, and the upside-down tree
+
+   Pure CSS. The layer sits above the page but can't be clicked
+   (pointer-events: none), is hidden from assistive tech, and disappears
+   entirely for anyone who has asked their OS for reduced motion.
+   ========================================================================= */
+
+.festive {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 40;
+}
+.festive--off { display: none; }
+
+/* --- Snow --------------------------------------------------------------- */
+
+.flake {
+  position: absolute;
+  top: 0;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: #fff;
+  /* A hairline ring so white flakes stay visible against the light parchment. */
+  box-shadow: 0 0 0 1px rgb(100 140 170 / 40%);
+  opacity: var(--op);
+  transform: translate3d(0, -5vh, 0);
+  animation: snowfall var(--dur) linear var(--delay) infinite;
+  will-change: transform;
+}
+
+@media (prefers-color-scheme: dark) {
+  .flake { box-shadow: none; }
+}
+
+@keyframes snowfall {
+  from { transform: translate3d(0, -5vh, 0); }
+  50%  { transform: translate3d(calc(var(--drift) * -.6), 50vh, 0); }
+  to   { transform: translate3d(var(--drift), 105vh, 0); }
+}
+
+@media (max-width: 600px) {
+  .flake:nth-child(n+25) { display: none; }
+}
+
+/* --- Sleigh ------------------------------------------------------------- */
+
+.sleigh {
+  position: absolute;
+  left: 0;
+  bottom: .25rem;
+  width: clamp(210px, 38vw, 360px);
+  transform: translateX(-100%);
+  /* Waits a beat after load, crosses once, and ends off the right-hand edge. */
+  animation: sleigh-fly 18s linear 1.5s both;
+}
+
+.sleigh__art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 25%));
+  animation: sleigh-bob .7s ease-in-out infinite alternate;
+}
+
+@keyframes sleigh-fly {
+  from { transform: translateX(-100%); visibility: visible; }
+  to   { transform: translateX(100vw); visibility: hidden; }
+}
+
+@keyframes sleigh-bob {
+  from { transform: translateY(0) rotate(-1deg); }
+  to   { transform: translateY(-6px) rotate(1deg); }
+}
+
+/* --- Snow toggle -------------------------------------------------------- */
+
+.snow-toggle {
+  font: inherit;
+  font-size: .95rem;
+  color: #cfe4d9;
+  background: transparent;
+  border: 1px solid #4a6b5c;
+  border-radius: 7px;
+  padding: .35rem .7rem;
+  cursor: pointer;
+}
+.snow-toggle:hover { background: var(--evergreen-soft); color: #fff; }
+.snow-toggle[aria-pressed="true"] { border-color: var(--spring); color: #fff; }
+
+/* --- Footer ------------------------------------------------------------- */
+
+.site-footer .site-footer__text p { max-width: 62ch; }
+.site-footer__text p + p { margin-top: .6rem; }
+
+/* --- The upside-down tree ------------------------------------------------
+   Hangs from the top-right corner of the page, over the header and a little
+   way into whatever is below it. Never blocks a click. On wide screens it sits
+   in the empty margin; below that the header reserves room for it so the nav
+   wraps instead of running underneath. */
+
+.site-header { position: relative; z-index: 10; }
+
+.tree {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+  width: 100px;
+  pointer-events: none;
+}
+.tree svg { display: block; width: 100%; height: auto; }
+
+@media (max-width: 1279px) {
+  .site-header__inner { padding-right: 128px; }
+}
+
+@media (max-width: 600px) {
+  .tree { width: 64px; right: .6rem; }
+  .site-header__inner { padding-right: 82px; }
+}
+
+/* --- Reduced motion ------------------------------------------------------
+   Snow and the sleigh go entirely, and so does the toggle that controls them.
+   The tree is static, so it stays. */
+
+@media (prefers-reduced-motion: reduce) {
+  .festive, .snow-toggle { display: none; }
+}

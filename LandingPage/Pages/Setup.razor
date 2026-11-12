@@ -39,7 +39,7 @@
         and the .NET 10 SDK.
     </p>
     <pre><code>git clone @(Config.Repo).git
-cd 12-days-of-mongodbmas-csharp
+cd @Config.RepoName
 
 docker compose up -d     # MongoDB, with Search and Vector Search
 docker compose ps        # wait for "healthy" — about 20 seconds

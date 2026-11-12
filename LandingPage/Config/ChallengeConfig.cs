@@ -13,12 +13,17 @@ namespace SantasWorkshop.LandingPage.Config;
 public sealed class ChallengeConfig
 {
     public string Repo { get; init; } = "";
-    public string Discussions { get; init; } = "";
     public string BadgeHub { get; init; } = "";
 
     public IReadOnlyList<Part> Parts { get; init; } = [];
     public IReadOnlyList<Badge> LevelUpBadges { get; init; } = [];
     public IReadOnlyList<Resource> Resources { get; init; } = [];
+
+    /// <summary>
+    /// The repository's name — also the folder <c>git clone</c> creates. Derived from
+    /// <see cref="Repo"/> so there is only one place it can be wrong.
+    /// </summary>
+    public string RepoName => Repo.TrimEnd('/').Split('/')[^1];
 
     /// <summary>A direct link to a part's README in the repo.</summary>
     public string ReadmeUrl(Part part) => $"{Repo}/blob/main/{part.Folder}/README.md";
@@ -35,7 +40,6 @@ public sealed class ChallengeConfig
         return new ChallengeConfig
         {
             Repo = overrides.Repo ?? Repo,
-            Discussions = overrides.Discussions ?? Discussions,
             BadgeHub = overrides.BadgeHub ?? BadgeHub,
             Parts = Parts,
             LevelUpBadges = LevelUpBadges,
@@ -51,7 +55,6 @@ public sealed class ChallengeConfig
 public sealed class DevelopmentOverrides
 {
     public string? Repo { get; init; }
-    public string? Discussions { get; init; }
     public string? BadgeHub { get; init; }
 }
 

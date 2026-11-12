@@ -1,7 +1,10 @@
 @inherits LayoutComponentBase
 @inject ChallengeConfig Config
+@inject IJSRuntime JS
 
 <div class="site">
+    <Festive Enabled="snowing" />
+
     <a class="skip-link" href="#main">Skip to content</a>
 
     <header class="site-header">
@@ -14,8 +17,14 @@
                 <NavLink href="setup">Setup</NavLink>
                 <NavLink href="resources">Resources &amp; FAQ</NavLink>
                 <a href="@Config.Repo" target="_blank" rel="noopener">GitHub ↗</a>
+                <button type="button" class="snow-toggle" aria-pressed="@(snowing ? "true" : "false")"
+                        title="Turn the snow and sleigh on or off" @onclick="ToggleSnow">
+                    ❄ Snow
+                </button>
             </nav>
         </div>
+
+        <UpsideDownTree />
     </header>
 
     <main class="site-main" id="main">
@@ -24,11 +33,43 @@
 
     <footer class="site-footer">
         <div class="wrap">
-            <p>
-                Built with MongoDB and .NET. The code lives on
-                <a href="@Config.Repo" target="_blank" rel="noopener">GitHub</a> —
-                issues and pull requests are welcome.
-            </p>
+            <div class="site-footer__text">
+                <p>
+                    Built with MongoDB and .NET. The code lives on
+                    <a href="@Config.Repo" target="_blank" rel="noopener">GitHub</a> —
+                    issues and pull requests are welcome.
+                </p>
+                <p>
+                    To our southern hemisphere friends: happy summer Christmas.
+                    Yes, the tree up in the corner is upside down — that one's for you. 🐨
+                </p>
+            </div>
         </div>
     </footer>
 </div>
+
+@code {
+    private bool snowing = true;
+
+    // The choice is remembered, so someone who turns the snow off doesn't have to do
+    // it again on every visit. If storage is blocked we simply fall back to "on".
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            snowing = await JS.InvokeAsync<string?>("localStorage.getItem", "snow") != "off";
+        }
+        catch (JSException) { }
+    }
+
+    private async Task ToggleSnow()
+    {
+        snowing = !snowing;
+
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "snow", snowing ? "on" : "off");
+        }
+        catch (JSException) { }
+    }
+}

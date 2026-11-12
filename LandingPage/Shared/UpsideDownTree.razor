@@ -1,0 +1,58 @@
+@*
+    A Christmas tree for our southern hemisphere friends: upside down, hanging from
+    the top of the page by its trunk, with a koala in a Santa hat clinging to the
+    trunk among the top branches.
+
+    Unlike the snow and sleigh this is real (if whimsical) content, so it has an
+    accessible name rather than being hidden. It does not move.
+*@
+
+<div class="tree">
+    <svg viewBox="0 0 120 160" role="img"
+         aria-label="An upside-down Christmas tree hanging from the top of the page, with a koala in a Santa hat clinging to its trunk">
+
+        @* Trunk, running right up to the top edge. *@
+        <rect x="53" y="0" width="14" height="46" rx="2" fill="#7a5233" />
+
+        @* Foliage, widest tier nearest the trunk, narrowing to a point below. Lowest tier first. *@
+        <polygon points="34,100 86,100 60,144" fill="#1d6a43" />
+        <polygon points="22,70 98,70 60,120" fill="#228050" />
+        <polygon points="8,40 112,40 60,92" fill="#2a9060" />
+
+        <circle cx="26" cy="46" r="3.2" fill="#e0453a" />
+        <circle cx="94" cy="46" r="3.2" fill="#f5c542" />
+        <circle cx="36" cy="59" r="3.2" fill="#f5c542" />
+        <circle cx="84" cy="59" r="3.2" fill="#e0453a" />
+        <circle cx="46" cy="82" r="3.2" fill="#e0453a" />
+        <circle cx="75" cy="85" r="3.2" fill="#f5c542" />
+        <circle cx="60" cy="112" r="3.2" fill="#e0453a" />
+
+        @* The star goes on the bottom tip, naturally. *@
+        <polygon points="60,142 62.2,147.5 68,147.8 63.5,151.4 65,157 60,153.8 55,157 56.5,151.4 52,147.8 57.8,147.5"
+                 fill="#f5c542" />
+
+        @* The koala, in front of the trunk and the top tier, arms round the trunk. *@
+        <g transform="translate(0 52)">
+            <ellipse cx="51" cy="22" rx="6" ry="3.5" fill="#8a9498" />
+            <ellipse cx="69" cy="22" rx="6" ry="3.5" fill="#8a9498" />
+            <ellipse cx="60" cy="8" rx="13" ry="12" fill="#9aa4a8" />
+            <ellipse cx="60" cy="10" rx="8" ry="8" fill="#d8dedf" />
+            <ellipse cx="46" cy="2" rx="4" ry="9" fill="#8a9498" transform="rotate(35 46 2)" />
+            <ellipse cx="74" cy="2" rx="4" ry="9" fill="#8a9498" transform="rotate(-35 74 2)" />
+
+            <circle cx="45" cy="-20" r="6.5" fill="#9aa4a8" />
+            <circle cx="45" cy="-20" r="3.5" fill="#e9d2d2" />
+            <circle cx="75" cy="-20" r="6.5" fill="#9aa4a8" />
+            <circle cx="75" cy="-20" r="3.5" fill="#e9d2d2" />
+            <circle cx="60" cy="-12" r="12" fill="#9aa4a8" />
+            <ellipse cx="60" cy="-9" rx="4.5" ry="6" fill="#2f3436" />
+            <circle cx="53.5" cy="-14" r="1.6" fill="#1c1f20" />
+            <circle cx="66.5" cy="-14" r="1.6" fill="#1c1f20" />
+
+            @* The hat. *@
+            <path d="M47 -20 Q50 -42 76 -36 Q69 -29 73 -20 Z" fill="#d62f2f" />
+            <rect x="46" y="-23" width="28" height="6" rx="3" fill="#ffffff" />
+            <circle cx="77" cy="-36" r="4" fill="#ffffff" />
+        </g>
+    </svg>
+</div>

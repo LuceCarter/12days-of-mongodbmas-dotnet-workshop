@@ -54,7 +54,7 @@ cp LandingPage/wwwroot/appsettings.Development.json.example \
 
 Then put your own URL in it. `appsettings.Development.json` is git-ignored, is loaded
 only when `ASPNETCORE_ENVIRONMENT=Development` (which `dotnet run` sets), and can
-override exactly three keys: `Repo`, `Discussions` and `BadgeHub`. Everything else —
+override exactly two keys: `Repo` and `BadgeHub`. Everything else —
 the parts, the badges, the resources — stays in `appsettings.json`, so there's only
 ever one copy of the real content.
 

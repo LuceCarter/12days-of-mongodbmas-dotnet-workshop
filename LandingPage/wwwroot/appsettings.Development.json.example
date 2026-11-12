@@ -1,7 +1,7 @@
 {
   "//": "Copy this to appsettings.Development.json to test the GitHub links locally.",
   "//2": "That filename is git-ignored, so your local value never reaches the repo.",
-  "//3": "Only these three keys can be overridden. Badge links stay as they are in appsettings.json.",
+  "//3": "Only `Repo` and `BadgeHub` can be overridden. Badge links stay as they are in appsettings.json.",
 
   "Repo": "https://github.com/your-username/your-fork"
 }
