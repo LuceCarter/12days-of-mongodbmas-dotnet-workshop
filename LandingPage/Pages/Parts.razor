@@ -1,10 +1,10 @@
 @page "/parts"
 @inject ChallengeConfig Config
 
-<PageTitle>The challenges — Santa's Workshop</PageTitle>
+<PageTitle>Challenges — Santa's Workshop</PageTitle>
 
 <div class="wrap">
-    <h1>The challenges</h1>
+    <h1>Challenges</h1>
     <p>
         Five parts, released through December. Each one takes <strong>30–60 minutes</strong>
         on the core path, and each has a <em>Level up</em> section if you want to go further.
@@ -30,11 +30,7 @@
                     <p>@part.Summary</p>
 
                     <div class="part__meta">
-                        @if (part.Available)
-                        {
-                            <span class="tag tag--live">Available now</span>
-                        }
-                        else
+                        @if (!part.Available)
                         {
                             <span class="tag tag--date">Releases @part.Released</span>
                         }

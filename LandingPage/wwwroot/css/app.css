@@ -317,7 +317,6 @@ h1[tabindex="-1"]:focus-visible, main[tabindex="-1"]:focus-visible { outline: no
   background: var(--parchment);
   white-space: nowrap;
 }
-.tag--live { border-color: transparent; background: var(--spring); color: var(--evergreen); }
 .tag--date { border-color: color-mix(in srgb, var(--holly) 40%, transparent); color: var(--holly); }
 .tag--badge { border-style: dashed; }
 

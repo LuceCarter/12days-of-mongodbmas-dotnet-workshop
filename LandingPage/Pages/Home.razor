@@ -72,16 +72,12 @@
                     <p class="card__step">Part @part.Id · @part.Level</p>
                     <h3>@part.Title</h3>
                     <p>@part.Summary</p>
-                    <p>
-                        @if (part.Available)
-                        {
-                            <span class="tag tag--live">Available now</span>
-                        }
-                        else
-                        {
-                            <span class="tag tag--date">Releases @part.Released</span>
-                        }
-                    </p>
+                    @* A release date only for parts that are not out yet. A released part needs no
+                       badge saying so — and a green pill looks like a button. *@
+                    @if (!part.Available)
+                    {
+                        <p><span class="tag tag--date">Releases @part.Released</span></p>
+                    }
                 </div>
             </li>
         }

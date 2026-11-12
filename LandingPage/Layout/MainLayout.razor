@@ -16,8 +16,9 @@
 
             <nav class="site-nav" aria-label="Main">
                 <NavLink href="" Match="NavLinkMatch.All">Home</NavLink>
-                <NavLink href="parts">The challenges</NavLink>
+                @* Setup comes first: you can't start a challenge without it. *@
                 <NavLink href="setup">Setup</NavLink>
+                <NavLink href="parts">Challenges</NavLink>
                 <NavLink href="resources">Resources &amp; FAQ</NavLink>
                 <a href="@Config.Repo" target="_blank" rel="noopener">GitHub ↗</a>
                 <button type="button" class="snow-toggle" aria-pressed="@(snowing ? "true" : "false")"

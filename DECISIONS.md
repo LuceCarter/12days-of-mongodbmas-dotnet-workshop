@@ -582,3 +582,16 @@ Things that went wrong while building it, in case they recur:
 New tests (`IndexHtmlTests`): every relative file `index.html` links must exist in `wwwroot`; each icon's
 real pixel size, read from the PNG header, must match its name; the `.ico` must hold 16, 32 and 48 pixel
 images. Checked by planting a dead link and a 16px file named `favicon-32.png`.
+
+### Header order, "Challenges", and no "Available now" pill
+
+- **Setup comes before Challenges** in the header, and the link is just **Challenges** (the page's own
+  title and heading match). A developer can't start a part without an environment, so the nav now
+  reads in the order they'll need things: Home, Setup, Challenges, Resources & FAQ. Prose that says
+  "the challenges" in a sentence is unchanged.
+- **Only unreleased parts carry a tag** — "Releases 5 December". A released part used to get a green
+  "Available now" pill, which was the same shape and colour as the **Start Part 1** button and
+  looked clickable. Absence now means "it's out"; the Start button is the one green thing on a
+  released card. The pill's `.tag--live` style had no other use and is gone.
+- Releasing a part is still just `"Available": true`: its date tag disappears and its Start button
+  appears, with nothing else to edit.
