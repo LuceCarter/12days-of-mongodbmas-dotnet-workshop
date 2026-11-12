@@ -1,0 +1,134 @@
+@using SantasWorkshop.Content
+@inject HttpClient Http
+@inject ContentCatalog Catalog
+@inject MarkdownRenderer Renderer
+@inject ChallengeConfig Config
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@*
+    Renders one of the repository's own markdown files inside the site.
+
+    The file is fetched from wwwroot/content/ (copied there at build time, see the
+    CopySiteContent target in the .csproj) and turned into HTML by SantasWorkshop.Content.
+    That library decides what the markdown may do — which HTML survives, where links go —
+    so the output here is safe to inject as markup.
+*@
+
+@if (current is null)
+{
+    <div class="wrap">
+        <h1>That page isn't on the shelf</h1>
+        <p>There's nothing to show at <code>@Route</code>. Try <a href="parts">the challenges</a>.</p>
+    </div>
+}
+else if (error is not null)
+{
+    <div class="wrap">
+        <h1>@current.Title</h1>
+        <div class="callout" role="alert">
+            <p><strong>Couldn't load this page.</strong> @error</p>
+            <p><a href="@GitHubUrl("blob")" target="_blank" rel="noopener">Read it on GitHub instead ↗</a></p>
+        </div>
+    </div>
+}
+else if (rendered is null)
+{
+    <div class="wrap"><p role="status">Loading…</p></div>
+}
+else
+{
+    <PageTitle>@(rendered.Title ?? current.Title) — Santa's Workshop</PageTitle>
+
+    <div class="wrap">
+        <div class="content">
+            @if (rendered.Toc.Count >= 3)
+            {
+                @* Phone: a collapsed list above the article. Wide screens: a sticky side column.
+                   Two copies of the links, one hidden by CSS at each size. *@
+                <details class="toc toc--inline">
+                    <summary>On this page</summary>
+                    <TocList Route="@current.Route" Entries="rendered.Toc" />
+                </details>
+                <nav class="toc toc--side" aria-label="On this page">
+                    <p class="toc__title">On this page</p>
+                    <TocList Route="@current.Route" Entries="rendered.Toc" />
+                </nav>
+            }
+
+            <article class="prose">
+                @((MarkupString)rendered.Html)
+
+                <p class="prose__source">
+                    <a href="@GitHubUrl("blob")" target="_blank" rel="noopener">View on GitHub ↗</a> ·
+                    <a href="@GitHubUrl("edit")" target="_blank" rel="noopener">Suggest a change ↗</a>
+                </p>
+            </article>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>The site route to render, e.g. <c>parts/1</c>. Must be in the <see cref="ContentCatalog"/>.</summary>
+    [Parameter, EditorRequired] public string Route { get; set; } = "";
+
+    private ContentPage? current;
+    private RenderedPage? rendered;
+    private string? error;
+    private string? loadedRoute;
+    private bool scrollPending;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Route == loadedRoute) return;
+        loadedRoute = Route;
+
+        rendered = null;
+        error = null;
+
+        if (!Catalog.TryGetByRoute(Route, out var found))
+        {
+            current = null;
+            return;
+        }
+
+        current = found;
+
+        try
+        {
+            var markdown = await Http.GetStringAsync($"content/{current.SourcePath}");
+            rendered = Renderer.Render(markdown, current.SourcePath);
+            scrollPending = true;
+        }
+        catch (HttpRequestException)
+        {
+            error = "The file didn't download. Check your connection and refresh.";
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!scrollPending || rendered is null) return;
+        scrollPending = false;
+
+        try { await JS.InvokeVoidAsync("santaWorkshop.highlight"); }
+        catch (JSDisconnectedException) { }
+
+        await ScrollToFragmentAsync(new Uri(Nav.Uri).Fragment);
+    }
+
+    // Only needed for arriving on a page *with* a fragment (a deep link, or README →
+    // setup#option-2): the headings don't exist until the file has downloaded, so the
+    // browser's own jump has nothing to land on. Clicking a "#heading" link on the page
+    // you're already on is handled by Blazor itself, which scrolls without raising
+    // LocationChanged — so there is deliberately no handler for that here.
+    private async Task ScrollToFragmentAsync(string fragment)
+    {
+        var id = Uri.UnescapeDataString(fragment.TrimStart('#'));
+        if (id.Length == 0) return;
+
+        try { await JS.InvokeVoidAsync("santaWorkshop.scrollToId", id); }
+        catch (JSDisconnectedException) { }
+    }
+
+    private string GitHubUrl(string kind) => $"{Config.Repo}/{kind}/main/{current!.SourcePath}";
+}

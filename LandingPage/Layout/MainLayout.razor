@@ -1,11 +1,14 @@
 @inherits LayoutComponentBase
 @inject ChallengeConfig Config
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
 <div class="site">
     <Festive Enabled="snowing" />
 
-    <a class="skip-link" href="#main">Skip to content</a>
+    @* Not a bare "#main": with <base href> that resolves to the site root, so the link would
+       send a keyboard user to the home page instead of past the navigation. *@
+    <a class="skip-link" href="@(CurrentPath)#main">Skip to content</a>
 
     <header class="site-header">
         <div class="site-header__inner">
@@ -27,7 +30,7 @@
         <UpsideDownTree />
     </header>
 
-    <main class="site-main" id="main">
+    <main class="site-main" id="main" tabindex="-1">
         @Body
     </main>
 
@@ -49,15 +52,23 @@
 </div>
 
 @code {
+    // Namespaced: GitHub Pages project sites share one origin (and so one localStorage)
+    // with every other Pages site the same account publishes.
+    private const string SnowKey = "santas-workshop:snow";
+
     private bool snowing = true;
+
+    // The current page's own path, without any #fragment or ?query.
+    private string CurrentPath => Nav.ToBaseRelativePath(Nav.Uri).Split('#', '?')[0];
 
     // The choice is remembered, so someone who turns the snow off doesn't have to do
     // it again on every visit. If storage is blocked we simply fall back to "on".
     protected override async Task OnInitializedAsync()
     {
+
         try
         {
-            snowing = await JS.InvokeAsync<string?>("localStorage.getItem", "snow") != "off";
+            snowing = await JS.InvokeAsync<string?>("localStorage.getItem", SnowKey) != "off";
         }
         catch (JSException) { }
     }
@@ -68,7 +79,7 @@
 
         try
         {
-            await JS.InvokeVoidAsync("localStorage.setItem", "snow", snowing ? "on" : "off");
+            await JS.InvokeVoidAsync("localStorage.setItem", SnowKey, snowing ? "on" : "off");
         }
         catch (JSException) { }
     }

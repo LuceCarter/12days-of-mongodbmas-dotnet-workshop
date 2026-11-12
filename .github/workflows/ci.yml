@@ -133,6 +133,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      # Link audit, heading ids, and the HTML allowlist, run against the repository's real
+      # markdown. No MongoDB needed. A broken link in a README fails here, on the PR.
+      - name: Test the content the site renders
+        run: dotnet test src/Content.Tests --configuration Release
+
       # Catches a broken landing page on the PR rather than on the deploy.
       - name: Publish
         run: dotnet publish LandingPage/SantasWorkshop.LandingPage.csproj -c Release -o publish
@@ -144,3 +149,19 @@ jobs:
           test -d publish/wwwroot/_framework
           grep -q '<base href="/" />' publish/wwwroot/index.html \
             || { echo "::error::index.html no longer has the base href that pages.yml rewrites."; exit 1; }
+
+      - name: Check the rendered content and per-route pages are in the output
+        run: |
+          # The markdown the site renders has to be in the published output...
+          for f in docs/setup.md docs/csharp-to-badge.md docs/objective-map.md \
+                   part1-inventory/README.md part1-inventory/SOLUTIONS.md; do
+            test -f "publish/wwwroot/content/$f" \
+              || { echo "::error::$f was not copied into the published site."; exit 1; }
+          done
+
+          # ...and each route must have its own page, so deep links answer 200 rather than 404.
+          .github/scripts/make-route-pages.sh publish/wwwroot
+          for r in parts/1 parts/1/solutions setup docs/objective-map resources; do
+            test -f "publish/wwwroot/$r/index.html" \
+              || { echo "::error::No page was written for the route /$r."; exit 1; }
+          done

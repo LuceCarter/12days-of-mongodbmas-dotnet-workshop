@@ -1,0 +1,58 @@
+@page "/setup"
+@page "/docs/{Name}"
+@page "/parts/{Id}"
+@page "/parts/{Id}/solutions"
+@inject NavigationManager Nav
+@inject ContentCatalog Catalog
+@inject ChallengeConfig Config
+@using SantasWorkshop.Content
+@*
+    Every page rendered from a repository markdown file lives behind this one component.
+
+    Which routes exist is decided by the ContentCatalog (built from appsettings.json), not
+    by the @page lines above — those only say which URL shapes reach this component. A part
+    that isn't released yet matches /parts/{Id} but isn't in the catalog, so it gets the
+    "coming soon" card instead of a broken page.
+*@
+
+@if (Catalog.TryGetByRoute(route, out _))
+{
+    <MarkdownView Route="@route" @key="route" />
+}
+else if (UnreleasedPart is { } part)
+{
+    <PageTitle>Part @part.Id — coming soon — Santa's Workshop</PageTitle>
+    <div class="wrap">
+        <p class="eyebrow eyebrow--ink">Part @part.Id</p>
+        <h1>@part.Title</h1>
+        <p>This part isn't out yet — it releases on <strong>@part.Released</strong>.</p>
+        <p>In the meantime, <a href="parts">here are all the challenges</a>, and
+            <a href="setup">the setup guide</a> will get your environment ready ahead of time.</p>
+    </div>
+}
+else
+{
+    <PageTitle>Page not found — Santa's Workshop</PageTitle>
+    <div class="wrap">
+        <h1>That page isn't on the shelf</h1>
+        <p>The elves have had a look and can't find it. Try <a href="">the home page</a>,
+            <a href="parts">the challenges</a>, or <a href="setup">the setup guide</a>.</p>
+    </div>
+}
+
+@code {
+    // The route template parameters are unused: the route is read from the URL so that
+    // /parts/1 and /parts/1/solutions are told apart even though Id is the same for both.
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Name { get; set; }
+
+    private string route = "";
+
+    protected override void OnParametersSet()
+    {
+        route = Nav.ToBaseRelativePath(Nav.Uri).Split('#', '?')[0].Trim('/');
+    }
+
+    private Part? UnreleasedPart =>
+        Id is null ? null : Config.Parts.FirstOrDefault(p => p.Id.Equals(Id, StringComparison.OrdinalIgnoreCase) && !p.Available);
+}

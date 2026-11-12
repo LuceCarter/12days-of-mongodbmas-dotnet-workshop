@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Turns the repository's own markdown files into HTML for the landing page.
+
+    This is a plain class library rather than part of the Blazor project so it can be
+    unit-tested without a WebAssembly host. It is the one place that decides what a
+    markdown file is allowed to do on the site: which HTML survives, where links go.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SantasWorkshop.Content</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" />
+  </ItemGroup>
+
+</Project>

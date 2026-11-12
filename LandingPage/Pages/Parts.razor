@@ -51,9 +51,9 @@
                     <div class="part__links">
                         @if (part.Available)
                         {
-                            <a class="btn btn--primary" href="@Config.ReadmeUrl(part)" target="_blank" rel="noopener">
-                                Start Part @part.Id ↗
-                            </a>
+                            <a class="btn btn--primary" href="parts/@part.Id">Start Part @part.Id</a>
+                            <a href="parts/@part.Id/solutions">Solutions</a>
+                            <a href="@Config.ReadmeUrl(part)" target="_blank" rel="noopener">View on GitHub ↗</a>
                         }
                         @foreach (var badge in part.Badges)
                         {

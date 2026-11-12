@@ -14,6 +14,14 @@ on:
     branches: [main]
     paths:
       - 'LandingPage/**'
+      # The site renders these files, so editing one has to redeploy. Without these
+      # lines a README fix would merge and the live copy would quietly stay stale.
+      - 'part*/*.md'
+      - 'part*/**/*.md'
+      - 'docs/**'
+      - 'src/Content/**'
+      - 'tools/site-routes/**'
+      - '.github/scripts/make-route-pages.sh'
       - 'Directory.Packages.props'
       - 'global.json'
       - '.github/workflows/pages.yml'
@@ -56,9 +64,13 @@ jobs:
           sed -i 's|<base href="/" />|<base href="/${{ github.event.repository.name }}/" />|' publish/wwwroot/index.html
           grep '<base' publish/wwwroot/index.html
 
-      # Blazor routes like /parts don't exist as files. GitHub Pages serves
-      # 404.html for anything it can't find, so making that a copy of index.html
-      # hands the URL to the Blazor router instead of showing a 404.
+      # Blazor routes like /parts/1 don't exist as files. Give each one a real index.html so
+      # it answers 200 (crawlers and link previews see an error for a 404 *status*)...
+      - name: Write an index.html for every route
+        run: .github/scripts/make-route-pages.sh publish/wwwroot
+
+      # ...and keep 404.html as the catch-all for anything we didn't list: GitHub serves it
+      # for unknown paths, which hands the URL to the Blazor router instead of showing a 404.
       - name: Add SPA fallback
         run: cp publish/wwwroot/index.html publish/wwwroot/404.html
 

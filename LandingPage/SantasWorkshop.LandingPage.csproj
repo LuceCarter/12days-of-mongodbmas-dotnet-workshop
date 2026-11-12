@@ -24,8 +24,35 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\src\Content\SantasWorkshop.Content.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
   </ItemGroup>
+
+  <!--
+    The site renders the repository's own markdown, so there is only ever one copy of each
+    README: the one GitHub shows. Before every build, copy the files the site serves into
+    wwwroot/content/, keeping their repo-relative paths (content/part1-inventory/README.md,
+    content/docs/setup.md). That folder is generated and git-ignored.
+
+    Which files count is decided here by glob, and in ContentCatalog by route. The tests in
+    src/Content.Tests check that every route the catalog serves has a file behind it.
+  -->
+  <Target Name="CopySiteContent" BeforeTargets="BeforeBuild;ResolveProjectStaticWebAssets">
+    <ItemGroup>
+      <_SiteDocs Include="$(MSBuildProjectDirectory)\..\docs\*.md" />
+      <_SiteParts Include="$(MSBuildProjectDirectory)\..\part*\*.md" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_SiteDocs)"
+          DestinationFolder="$(MSBuildProjectDirectory)\wwwroot\content\docs"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_SiteParts)"
+          DestinationFiles="@(_SiteParts->'$(MSBuildProjectDirectory)\wwwroot\content\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

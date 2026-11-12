@@ -13,3 +13,4 @@ LandingPage/wwwroot/appsettings.Development.json
 *.received.*
 TestResults/
 publish/
+LandingPage/wwwroot/content/

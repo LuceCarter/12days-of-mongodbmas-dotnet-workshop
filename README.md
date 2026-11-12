@@ -78,7 +78,9 @@ dotnet run --project tools/doctor
 ```
 docker-compose.yml       MongoDB with Search and Vector Search, for local work
 tools/doctor/            Environment check — run this first, and whenever things break
+tools/site-routes/       Lists every URL the landing page serves (used by the deploy)
 src/Shared/              The Toy model, seed data and connection helpers
+src/Content/             Renders this repo's markdown for the landing page (and its tests)
 part1-inventory/         Part 1: README, Starter/, Tests/, SOLUTIONS.md
 part2-ledger/            Part 2 …
 part3a-search/
@@ -106,6 +108,12 @@ CI proves two things on every pull request, and they're the two that matter:
   starter project, so the documentation can't drift away from working code.
 
 If you change a solution, change it in `SOLUTIONS.md` — that file is the source.
+
+**The landing page renders these same markdown files**, so there is one copy of each README, not
+two. Write plain GitHub-flavoured markdown; relative links to other rendered files become links
+within the site, and the only raw HTML that survives is `details`, `summary`, `b` and a few other
+harmless tags. `dotnet test src/Content.Tests` checks every link and heading in the shipped files.
+The full rules are in [LandingPage/README.md](LandingPage/README.md#writing-content).
 
 ---
 

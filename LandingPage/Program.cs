@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using SantasWorkshop.LandingPage;
+using SantasWorkshop.Content;
 using SantasWorkshop.LandingPage.Config;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -27,14 +28,24 @@ if (builder.HostEnvironment.IsDevelopment())
             "appsettings.Development.json", ChallengeConfigContext.Default.DevelopmentOverrides);
         config = config.With(overrides);
     }
-    catch (Exception ex) when (ex is HttpRequestException or JsonException)
+    catch (HttpRequestException)
     {
-        // There isn't one, or it isn't valid JSON. Neither is worth failing a
-        // local run over — the committed appsettings.json still applies.
+        // There isn't one. That is the normal case, so say nothing.
+    }
+    catch (JsonException ex)
+    {
+        // There is one, but it isn't valid JSON. Worth a note; not worth failing a local
+        // run over — the committed appsettings.json still applies.
         Console.WriteLine($"appsettings.Development.json was ignored: {ex.Message}");
     }
 }
 
 builder.Services.AddSingleton(config);
+
+// Which repository markdown files the site renders itself, and where. Releasing a part
+// (Available: true in appsettings.json) is what makes its README and SOLUTIONS appear.
+var catalog = ContentCatalog.Create(config.Parts.Select(p => new PartSource(p.Id, p.Folder, p.Title, p.Available)));
+builder.Services.AddSingleton(catalog);
+builder.Services.AddSingleton(new MarkdownRenderer(catalog, config.Repo));
 
 await builder.Build().RunAsync();

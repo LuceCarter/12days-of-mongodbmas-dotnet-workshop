@@ -1,0 +1,17 @@
+@using SantasWorkshop.Content
+
+<ul class="toc__list">
+    @foreach (var entry in Entries)
+    {
+        @* Full "route#id" rather than "#id": a bare fragment resolves against <base href>
+           and would leave the page. *@
+        <li class="@(entry.Level == 3 ? "toc__item toc__item--sub" : "toc__item")">
+            <a href="@Route#@entry.Id">@entry.Text</a>
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter, EditorRequired] public string Route { get; set; } = "";
+    [Parameter, EditorRequired] public IReadOnlyList<TocEntry> Entries { get; set; } = [];
+}

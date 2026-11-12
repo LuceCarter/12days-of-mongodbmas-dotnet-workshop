@@ -44,9 +44,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+/* No smooth scrolling: anchor links (table of contents, skip link) jump straight there.
+   Gliding past thousands of pixels of a long README is slow and disorienting. */
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
@@ -109,7 +109,7 @@ hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
 }
 .skip-link:focus { left: 0; }
 
-h1[tabindex="-1"]:focus-visible { outline: none; }
+h1[tabindex="-1"]:focus-visible, main[tabindex="-1"]:focus-visible { outline: none; }
 
 :focus-visible {
   outline: 3px solid var(--spring-ink);
@@ -443,6 +443,175 @@ h1[tabindex="-1"]:focus-visible { outline: none; }
   z-index: 1000;
 }
 #blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: 1rem; top: .75rem; }
+
+/* =========================================================================
+   Rendered markdown — the repository's own READMEs and docs, shown in the site
+
+   Everything under .prose is generated from markdown, so it styles plain HTML
+   elements rather than classes. Anything GitHub-flavoured markdown can produce
+   needs a rule here, or it renders unstyled.
+   ========================================================================= */
+
+.eyebrow--ink { color: var(--spring-ink); }
+
+.content {
+  display: grid;
+  gap: 1.5rem 3rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.prose { min-width: 0; }
+.prose > :first-child { margin-top: 0; }
+
+.prose :is(h1, h2, h3, h4) { scroll-margin-top: 1rem; }
+.prose h2 { padding-top: 1.25rem; border-top: 1px solid var(--rule); }
+/* The markdown already puts a rule between sections; don't draw a second one. */
+.prose hr + h2 { padding-top: 0; border-top: 0; margin-top: 1.5rem; }
+.prose h3 { margin-top: 2rem; }
+.prose h4 { font-size: 1rem; margin-top: 1.5rem; }
+
+.prose ul, .prose ol { padding-left: 1.4rem; }
+.prose li { margin: .3rem 0; }
+.prose li > p { margin-bottom: .5rem; }
+.prose img { max-width: 100%; height: auto; border-radius: 8px; }
+.prose hr { margin: 2rem 0; }
+.prose strong { font-weight: 650; }
+
+/* Code uses the column, not the reading width. */
+.prose pre { max-width: 100%; margin: 1rem 0 1.25rem; }
+
+/* Tables can be wider than a phone. Code in a cell wraps (the global rule) so every column
+   stays visible on a desktop — hiding the last column off-screen is worse than breaking an
+   identifier. Anything still too wide scrolls inside the table, never the page. */
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: .9rem;
+}
+.prose th, .prose td {
+  text-align: left;
+  vertical-align: top;
+  padding: .5rem .7rem;
+  border-bottom: 1px solid var(--rule);
+}
+.prose th {
+  font-weight: 700;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--rule);
+}
+
+.prose blockquote {
+  margin: 1.25rem 0;
+  padding: .85rem 1.2rem;
+  border-left: 4px solid var(--spring-ink);
+  background: var(--surface);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  max-width: var(--measure);
+}
+.prose blockquote > :last-child { margin-bottom: 0; }
+
+/* Solutions and "legacy SQL" asides are written as <details>. */
+.prose details {
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: .1rem 1.15rem;
+  margin: 1rem 0;
+}
+.prose details > summary {
+  cursor: pointer;
+  padding: .75rem 0;
+  font-weight: 500;
+}
+.prose details[open] > summary {
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: .9rem;
+}
+.prose details > :last-child { margin-bottom: 1rem; }
+
+.prose input[type="checkbox"] { margin-right: .5rem; }
+
+.prose__source {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: .92rem;
+  max-width: none;
+}
+
+/* --- Syntax colours ------------------------------------------------------
+   Code panels are always dark evergreen (light or dark page), so one palette
+   serves both. Every colour here clears 4.5:1 against #0b2e21. */
+
+.prose .hljs-keyword, .prose .hljs-selector-tag, .prose .hljs-doctag { color: #f5c542; }
+.prose .hljs-string, .prose .hljs-regexp, .prose .hljs-addition      { color: #7ae8a8; }
+.prose .hljs-number, .prose .hljs-literal, .prose .hljs-symbol        { color: #9ad0ff; }
+.prose .hljs-title, .prose .hljs-title.class_, .prose .hljs-title.function_,
+.prose .hljs-type, .prose .hljs-built_in, .prose .hljs-attr           { color: #9ad0ff; }
+.prose .hljs-meta, .prose .hljs-meta .hljs-keyword                    { color: #c8b0ff; }
+.prose .hljs-variable, .prose .hljs-params, .prose .hljs-property     { color: #e6f4ec; }
+.prose .hljs-deletion                                                 { color: #ff9f94; }
+.prose .hljs-comment, .prose .hljs-quote                              { color: #88a496; font-style: italic; }
+.prose .hljs-emphasis { font-style: italic; }
+.prose .hljs-strong   { font-weight: 700; }
+
+/* --- On this page ------------------------------------------------------- */
+
+.toc { font-size: .92rem; }
+
+.toc__title {
+  margin: 0 0 .6rem;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.toc__list { list-style: none; margin: 0; padding: 0; max-width: none; }
+.toc__item { max-width: none; }
+
+.toc__item a {
+  display: block;
+  padding: .25rem 0 .25rem .8rem;
+  border-left: 2px solid var(--rule);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.toc__item a:hover { color: var(--ink); border-left-color: var(--spring-ink); }
+.toc__item--sub a { padding-left: 1.6rem; font-size: .88rem; }
+
+/* Phone: collapsed, above the article. */
+.toc--inline {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: .15rem 1rem;
+}
+.toc--inline summary { cursor: pointer; font-weight: 600; padding: .65rem 0; }
+.toc--inline[open] summary { margin-bottom: .35rem; }
+.toc--side { display: none; }
+
+/* Wide: a sticky column beside the article instead. */
+@media (min-width: 1100px) {
+  .content { grid-template-columns: minmax(0, 1fr) 15rem; }
+  .content > .prose { grid-column: 1; grid-row: 1; }
+  .toc--inline { display: none; }
+  .toc--side {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+  }
+}
 
 /* =========================================================================
    Festive layer — snow, sleigh, and the upside-down tree

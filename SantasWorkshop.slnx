@@ -10,10 +10,19 @@
     <Project Path="part1-inventory/Tests/Part1.Tests.csproj" />
   </Folder>
   <Folder Name="/src/" />
+  <Folder Name="/src/Content/">
+    <Project Path="src/Content/SantasWorkshop.Content.csproj" />
+  </Folder>
+  <Folder Name="/src/Content.Tests/">
+    <Project Path="src/Content.Tests/SantasWorkshop.Content.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/SantasWorkshop.Shared.csproj" />
   </Folder>
   <Folder Name="/tools/" />
+  <Folder Name="/tools/site-routes/">
+    <Project Path="tools/site-routes/SantasWorkshop.SiteRoutes.csproj" />
+  </Folder>
   <Folder Name="/tools/doctor/">
     <Project Path="tools/doctor/SantasWorkshop.Doctor.csproj" />
   </Folder>
