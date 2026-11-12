@@ -515,3 +515,37 @@ Headless Chrome (`--headless=new`) is usable, within limits learned the hard way
   screenshot. The new server's log must say "Now listening".
 - A rendered-page crawl (every route, every `<a>`, every `#fragment`, every external URL) found the
   skip-link bug that no unit test could have: 13 pages, 190 internal links, 22 external URLs.
+
+### Every part says where the code is (and the tests that keep it that way)
+
+A learner arriving from the website has no repository yet, but Part 1 told them to run
+`docker compose up -d` and edit `Starter/WorkshopInventory.cs` without saying where either lives.
+Part 1 now has a **Get the code** section straight after the story: the repo link, Codespaces, the
+clone commands, "run every command from the folder containing `docker-compose.yml`", and a small
+file tree marking the one file they write in. `docs/setup.md` lost its `<this repo>` placeholder, and
+**Option 3 (Atlas, no Docker) now clones first** — it used to jump straight to the doctor, which only
+works from a clone.
+
+The URL has to be written literally in the markdown (GitHub renders these files too and cannot
+substitute a setting), so it now exists in several places. `RepoReferenceTests` keeps them honest:
+
+- every `github.com/<owner>/<repo>` in the shipped markdown that names our owner must name the
+  configured repo, so a rename fails a test instead of leaving stale links;
+- `docs/setup.md` must have a real clone command and no placeholder, and each of its three options
+  must say how to get the code;
+- **every released part's README must link the repo, show a clone command, mention Codespaces and
+  say where its `Starter/` folder is** — so Parts 2–4 cannot ship without it.
+
+Checked for teeth by planting a stale repo name, the old placeholder, an Option 3 with no clone, and
+a README with no starter path; each failed the matching test. (One plant silently did nothing the
+first time: `sed '0,/re/s//x/'` is GNU-only and macOS sed ignores it. If a planted defect does not
+fail a test, first check the plant actually happened.)
+
+### Previewing README edits needs `dotnet watch --no-hot-reload`
+
+The site serves a copy made at build time, so editing a README under a running `dotnet run` showed
+nothing until a restart — found when a README edit did not appear in a screenshot. The `.csproj` now
+declares the markdown as `<Watch>` items. In `dotnet watch`'s default hot-reload mode that is still not
+enough: it logs `File updated` then `No managed code changes to apply` and does nothing. With
+`--no-hot-reload` the same edit rebuilt and refreshed the served copy in about five seconds. Documented
+in `LandingPage/README.md`.

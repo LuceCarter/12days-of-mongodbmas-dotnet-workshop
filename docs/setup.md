@@ -1,5 +1,10 @@
 # Get set up
 
+All the code for these challenges lives in one public repository:
+**[github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop](https://github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop)**. Every command in these
+challenges runs from the root of that repository — the folder that contains
+`docker-compose.yml`.
+
 You need a MongoDB deployment that supports **Search** and **Vector Search**, and
 the .NET SDK. There are three ways to get there. Pick one.
 
@@ -15,11 +20,13 @@ It tells you what's wrong and how to fix it. Run it any time something stops wor
 
 ## Option 1 — GitHub Codespaces (easiest)
 
-Click **Code → Codespaces → Create codespace on main**.
+1. Open the repository: **[github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop](https://github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop)**.
+2. Click **Code → Codespaces → Create codespace on main**.
 
 Everything is installed and started for you: .NET 10, a MongoDB Atlas Local
 deployment, and the environment check runs automatically when the container
-finishes building. First build takes a few minutes.
+finishes building. First build takes a few minutes. The terminal opens in the
+repository root, so every command in the challenges works as written.
 
 Nothing to install locally. Nothing to configure.
 
@@ -31,14 +38,16 @@ Nothing to install locally. Nothing to configure.
 the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```bash
-git clone <this repo>
-cd <this repo>
+git clone https://github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop.git
+cd 12days-of-mongodbmas-dotnet-workshop
 
 docker compose up -d        # starts MongoDB with Search and Vector Search
 docker compose ps           # wait until it says "healthy" (about 20 seconds)
 
 dotnet run --project tools/doctor
 ```
+
+No git? Use **Code → Download ZIP** on the repository page and unzip it instead.
 
 That's it. Your connection string is:
 
@@ -64,6 +73,16 @@ The code finds it automatically, so you don't need to set anything.
 
 Use this if you can't run Docker, or you'd rather work against the real thing.
 The free M0 tier is enough for every part of this challenge.
+
+You still need the code on your machine, so start by cloning the repository (Docker
+isn't needed for this option):
+
+```bash
+git clone https://github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop.git
+cd 12days-of-mongodbmas-dotnet-workshop
+```
+
+Then:
 
 1. Create a free cluster at [mongodb.com/cloud/atlas/register](https://www.mongodb.com/cloud/atlas/register).
    Choose the **M0 free** tier.

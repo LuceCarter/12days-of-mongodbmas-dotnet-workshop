@@ -38,6 +38,20 @@ there is only ever one copy of each README:
 **To release a part, set its `"Available": true`.** Its README and SOLUTIONS pages appear (before
 that, `/parts/{id}` shows a "releases on …" card), and no code changes.
 
+### Previewing a README edit
+
+The site shows a **copy** of each markdown file, made at build time. So after editing a README,
+a plain `dotnet run` keeps showing the old text until you restart it. To preview edits as you
+write, run:
+
+```bash
+dotnet watch --project LandingPage --no-hot-reload
+```
+
+That rebuilds and restarts whenever a README or doc changes (about five seconds). The
+`--no-hot-reload` matters: without it `dotnet watch` notices the change but decides there is
+"no managed code change to apply" and does nothing.
+
 ### Writing content
 
 Write plain GitHub-flavoured markdown — the files are written for GitHub first and the site adapts

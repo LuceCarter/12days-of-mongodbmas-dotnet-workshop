@@ -41,6 +41,15 @@
     Which files count is decided here by glob, and in ContentCatalog by route. The tests in
     src/Content.Tests check that every route the catalog serves has a file behind it.
   -->
+  <!--
+    `dotnet watch` only watches the project's own files by default, so editing a README would
+    not refresh the preview — you'd keep seeing the copy made at the last build. Tell it these
+    files matter, and it rebuilds (re-running CopySiteContent) whenever one changes.
+  -->
+  <ItemGroup>
+    <Watch Include="..\docs\*.md;..\part*\*.md" />
+  </ItemGroup>
+
   <Target Name="CopySiteContent" BeforeTargets="BeforeBuild;ResolveProjectStaticWebAssets">
     <ItemGroup>
       <_SiteDocs Include="$(MSBuildProjectDirectory)\..\docs\*.md" />

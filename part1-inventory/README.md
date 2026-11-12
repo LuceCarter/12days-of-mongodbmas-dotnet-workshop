@@ -24,9 +24,41 @@ print shelf labels, and see at a glance what is running low.
 
 ---
 
+## Get the code
+
+Everything in this challenge lives in one public repository:
+
+**[github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop](https://github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop)**
+
+Get it either way:
+
+- **Codespaces (easiest).** On the repository page choose **Code → Codespaces → Create
+  codespace on main**. Everything is installed and the terminal opens in the right folder.
+- **On your machine.** You'll need the [.NET 10 SDK](https://dotnet.microsoft.com/download)
+  and [Docker](https://www.docker.com/products/docker-desktop/). Then clone it:
+
+```bash
+git clone https://github.com/LuceCarter/12days-of-mongodbmas-dotnet-workshop.git
+cd 12days-of-mongodbmas-dotnet-workshop
+```
+
+**Run every command in this challenge from that folder** — the one containing
+`docker-compose.yml`. The files you'll work with:
+
+```
+part1-inventory/
+  README.md                       this page
+  Starter/WorkshopInventory.cs    ← your code goes here
+  Tests/                          the tests (leave them alone)
+  SOLUTIONS.md                    answers, if you get stuck
+src/Shared/                       the Toy model and seed data
+```
+
+---
+
 ## Before you start
 
-Make sure your environment is ready:
+Make sure your environment is ready. From the repository folder:
 
 ```bash
 docker compose up -d
@@ -40,8 +72,10 @@ If anything is red, the doctor tells you how to fix it. Full instructions are in
 
 ## How this works
 
-Everything you write goes in **`Starter/WorkshopInventory.cs`**. It has twelve methods,
-each with a `// TODO` and a `throw new NotImplementedException`. Replace each one.
+Everything you write goes in
+[**`part1-inventory/Starter/WorkshopInventory.cs`**](Starter/WorkshopInventory.cs).
+It has twelve methods, each with a `// TODO` and a `throw new NotImplementedException`.
+Replace each one.
 
 Run the tests whenever you like:
 
@@ -109,7 +143,7 @@ here because translating from something you know is often the fastest way in.
 
 The elves have finished a new wooden sled. Put it in the catalogue.
 
-Open `Starter/WorkshopInventory.cs` and implement `AddToyAsync`.
+Open `part1-inventory/Starter/WorkshopInventory.cs` and implement `AddToyAsync`.
 
 ```csharp
 await _toys.InsertOneAsync(toy);
