@@ -35,16 +35,17 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
-    public void Every_released_part_ships_both_a_readme_and_solutions()
+    public void Every_written_part_ships_both_a_readme_and_solutions()
     {
-        var released = RepoFiles.Parts().Where(p => p.Available).ToList();
+        var written = RepoFiles.WrittenParts();
 
-        Assert.NotEmpty(released);
+        Assert.NotEmpty(written);
 
-        foreach (var part in released)
+        foreach (var part in written)
         {
             Assert.True(RepoFiles.Exists($"{part.Folder}/README.md"), $"Part {part.Id} is Available but has no README.md.");
-            Assert.True(RepoFiles.Exists($"{part.Folder}/SOLUTIONS.md"), $"Part {part.Id} is Available but has no SOLUTIONS.md.");
+            Assert.True(RepoFiles.Exists($"{part.Folder}/SOLUTIONS.md"),
+                $"Part {part.Id} has a README but no SOLUTIONS.md. Releasing it would link to a page that doesn't exist.");
         }
     }
 
@@ -140,6 +141,47 @@ public sealed class ShippedContentTests
             .ToList();
 
         Assert.Equal(Enumerable.Range(1, 12), steps);
+    }
+
+    [Fact]
+    public void Part_2_has_all_nine_steps_in_its_table_of_contents()
+    {
+        var steps = Rendered["parts/2"].Toc
+            .Where(t => t.Level == 3)
+            .Select(t => Regex.Match(t.Text, @"^Step (\d+) —"))
+            .Where(m => m.Success)
+            .Select(m => int.Parse(m.Groups[1].Value))
+            .ToList();
+
+        Assert.Equal(Enumerable.Range(1, 9), steps);
+    }
+
+    [Fact]
+    public void Part_2_solutions_has_all_nine_solutions()
+    {
+        Assert.Equal(9, Regex.Matches(Rendered["parts/2/solutions"].Html, @"<summary><b>Step (\d+) —").Count);
+    }
+
+    [Fact]
+    public void Every_step_in_a_readme_has_a_matching_solution()
+    {
+        // The two files are written separately, so nothing else stops a step being added to one and
+        // forgotten in the other. Compares step NUMBERS, so it works for every part, present and future.
+        var mismatches = new List<string>();
+
+        foreach (var part in RepoFiles.WrittenParts())
+        {
+            var inReadme = Rendered[$"parts/{part.Id}"].Toc
+                .Select(t => Regex.Match(t.Text, @"^Step (\d+) —")).Where(m => m.Success)
+                .Select(m => int.Parse(m.Groups[1].Value)).OrderBy(n => n).ToList();
+            var inSolutions = Regex.Matches(Rendered[$"parts/{part.Id}/solutions"].Html, @"<summary><b>Step (\d+) —")
+                .Select(m => int.Parse(m.Groups[1].Value)).OrderBy(n => n).ToList();
+
+            if (!inReadme.SequenceEqual(inSolutions))
+                mismatches.Add($"Part {part.Id}: README has steps [{string.Join(",", inReadme)}], SOLUTIONS has [{string.Join(",", inSolutions)}]");
+        }
+
+        Assert.Empty(mismatches);
     }
 
     [Fact]

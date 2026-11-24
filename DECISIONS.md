@@ -186,6 +186,17 @@ Things to confirm before the part that depends on them ships.
 - [ ] **Smooth/instant scrolling and the sleigh/snow motion feel right in a real browser.** Headless
       Chrome can measure scroll positions but not animation. *(Landing page)*
 
+- [ ] **Part 2's `explain` steps against Atlas M0.** Everything was verified against Atlas Local
+      8.0.15. The M0 free tier also runs 8.0, so plans should look the same, and the tests look for
+      stage names anywhere in the document rather than at a fixed path — but it has not been run
+      there. *(Part 2, Steps 8–9)*
+- [ ] **Someone clicks through the Compass instructions once.** The Part 2 Compass steps (Aggregations
+      tab → Explain → Explain Plan modal → Visual Tree / Raw Output; Indexes tab → Create Index) were
+      checked against the current Compass docs, not performed. Worth doing before Part 2 is released.
+      *(Part 2, Step 8–9)*
+- [ ] **Time the Part 2 core path.** It must land in 30–60 minutes; nine steps of one pipeline each
+      should, but that is an estimate, not a measurement. *(Part 2)*
+
 ---
 
 ## Resolved
@@ -630,3 +641,169 @@ challenges, from InsertOne() to an AI agent. Free MongoDB skill badges."* — 14
 ~160 search engines show before cutting mid-sentence. `IndexHtmlTests` fails if the description grows
 past 160 or the Open Graph title/description go missing. Also fixed "a enormous" → "an enormous" in
 Part 1's story.
+
+### Challenge-card badge buttons say "Earn a skill badge"
+
+The badge button on each challenge card used to show the badge's name ("CRUD Overview (C# edition)"),
+which read as a label rather than something to do. It now says **Earn a skill badge**.
+
+Two cases where that wording alone would be wrong, handled deliberately:
+
+- **Part 4 has two badges** (RAG and AI Agents). Two identical "Earn a skill badge" buttons going to
+  different places can't be told apart by anyone — and identical link text with different destinations
+  is an accessibility failure (WCAG 2.4.4). On that card each button reads "Earn a skill badge: <name>".
+- **The "Level up" list** is not on the cards and holds three different badges side by side, so it keeps
+  the names.
+
+The badge's name is not lost on the single-badge cards: it is the hover tooltip, and the button's accessible
+name is "Earn a skill badge: <name>" for screen readers. `BadgeLink` takes an optional `Text`; by default it
+still shows the badge name, so anywhere else it's used behaves as before.
+
+Checked in both states, because only one is visible today: with the `REPLACE_ME` placeholders ("link coming
+soon", tooltip names the badge) and, temporarily, with real URLs (real link, `aria-label`, tooltip), plus that
+no card has two buttons with the same accessible name. Not covered by an automated test: it is Razor
+component output and the project has no component-test harness.
+
+One thing the change makes visible: the single-badge cards no longer say *which* badge. Part 1's page names it
+("Badge: CRUD Overview (C# edition)") and the Level up list does too, but a card gives only the tooltip.
+
+### Previewing parts locally: `ReleaseParts`, not a flipped flag
+
+Releasing a part is `"Available": true` in the committed `appsettings.json`, and pushing that *is* the
+release. To look at a part you're still writing, the git-ignored `appsettings.Development.json` override
+now takes `ReleaseParts` (`["2","3A"]` or `["*"]`, case-insensitive). It is loaded only in Development, so it
+cannot reach `main` or the live site, and the content tests (which read the committed file) are unaffected.
+It logs to the browser console when active and names unknown ids. Checked: no override, all, some, mixed-case,
+typo'd ids (releases nothing, says so) and malformed JSON (ignored with a note).
+
+A part that is released locally with no README now says "There's no file at <path> yet" instead of "check
+your connection": a 404 on the markdown file is not a network problem.
+
+**`dotnet watch` does not see new files.** Editing an existing README refreshes in ~5s with
+`--no-hot-reload`, but creating a new one — the first README of a part — does not, because it only watches
+directories that already hold a watched file. Tried and rejected: a `.gitkeep` in each empty part folder
+with a wider `<Watch>` glob (`--list` showed the folders watched, yet nothing fired), and
+`DOTNET_USE_POLLING_FILE_WATCHER=1` (also nothing). Restarting works (verified). Documented rather than
+worked around. Lesson: `dotnet watch --list` shows what is *watched*, which is not the same as what
+*triggers a rebuild* — only a real file-creation test settles it.
+
+Note for next time: a compound shell command containing `rm -rf` is refused by the permission layer even when
+the `rm` is harmless; split it, or avoid `rm -rf` when `rm` of a single known file will do.
+
+---
+
+## 2026-11-18 — Part 2: The Naughty/Nice Ledger
+
+Written and verified, **not released**: `"Available"` is still `false` in `appsettings.json`. Preview it
+with the local-only override (`"ReleaseParts": ["2"]`); releasing it for real is the one-line flag flip,
+after the checklist in "Still unverified" above.
+
+### Data: `orders` + `ledger`, no `Child` collection
+
+The plan's model list had `Child, LedgerEntry, Order`. This builds `Order` and `LedgerEntry` and leaves
+`Child` out: children appear by name in both collections. Nothing in the five objectives needs a
+children table, and a third join would dilute the one join (`$lookup`) the part is meant to teach.
+Revisit it in Part 4 if the agent's order-status tool wants one.
+
+- **`season` is `"current"` or `"previous"`, never a date**, so the exercises read the same whenever
+  they're done. (The brief says no baked-in dates; a "this year" filter against real dates would also
+  make tests depend on the clock.)
+- **An order line is `{ toy, quantity }` — a name, no price.** That answers Part 1's own Level up
+  question (embed or reference?): embed the lines, which belong to one order and are always read with
+  it; reference the toy by name and let `$lookup` supply today's price. One test changes a price after the
+  orders exist and the totals follow.
+- **A child's verdict is never stored.** It is computed with `$group`, which is the point.
+- The data is **hand-pinned, not random.** Every row is there to make a step's test or trap meaningful:
+  two stale *open* orders from last season (forgetting `season` inflates demand), packed orders for a
+  toy that's also open (forgetting `status` does too), multi-line orders (the second `$match` in Step 4),
+  a toy nobody makes (the silent `$lookup` drop), a child on exactly 0 (`>=` vs `>`), verdicts that flip if
+  the season is ignored, five distinct top scores (no ties), a +12 from last season, and a ledger file in
+  no useful order (a `$limit` that runs first must fail). The generator is a throwaway script;
+  **`SeedDataContractTests` is what's committed**, and it asserts every one of those facts, so a tidy-up
+  that removes a trap fails a test instead of quietly leaving a step teaching nothing.
+
+### Steps, mapped to the brief
+
+Nine steps, one pipeline each, mapping to the five objectives exactly as the brief words them (checked
+against the brief itself, not the objective map — see the correction below). Against the brief's "Santa
+mapping ideas": *presents needed per region* → Step 4; *join orders to the catalogue and add a computed
+field* → Step 7; *a badly ordered pipeline vs a well-ordered one* → Step 2 (the wrong answer) plus a Level
+up (the plan comparison); *top 10 most-requested toys* → Level up (`$sortByCount`). **Not built:** the
+optional change-stream live order board. It isn't assessed, and every snippet in this part was run
+before it was written down; a change stream would need the same treatment, so it's left out rather than
+shipped unverified.
+
+Step 2 is deliberately a **debugging** exercise: a pipeline that compiles, runs and returns an empty
+list because `$match` runs after a `$group` that dropped the field it filters on. Its failing test says
+what to look at without giving the answer.
+
+### Stages are JSON; variables go in `BsonDocument`
+
+Stages are written as JSON strings, exactly as the shell and Compass show them, so the stage itself is
+identical in C# and in the badge. **A stage that contains a variable is built with `BsonDocument`.**
+Demonstrated, not asserted: a toy named `Kite, "Red" Dragon` makes the glued-string version throw a
+`FormatException`, and `x", "region": "Asia` silently adds a second condition to the stage.
+`PipelineDefinition<TIn,TOut>.Create(...)` takes a list of strings *or* of `BsonDocument`s, not a mix.
+Typed builders (`.Match().Count()`, `.SortByDescending().Limit()`) and LINQ are shown as alternatives
+and each was run through the step's tests.
+
+### Explain: what the server actually returns (found by running it, not by reading the docs)
+
+- The shape **depends on the pipeline**. A lone `$match` has a top-level `queryPlanner`; a longer one
+  nests it in `stages[0].$cursor`; and `$match` + `$count` on 8.0 is reported by the SBE engine
+  (`explainVersion` 2) as `GROUP > COLLSCAN` in yet another layout. The tests and the README therefore
+  search for `COLLSCAN`/`IXSCAN` and `totalDocsExamined` **anywhere** in the document.
+- **Steps 8 and 9 explain Step 3's pipeline, not Step 1's.** With an index, `$match` + `$count` becomes
+  `COUNT_SCAN` — never `IXSCAN` — so a learner would look for the headline word and not find it. Step 3's
+  pipeline gives `COLLSCAN` → `IXSCAN` and 46 → 22 documents examined.
+- Step 8 is a generic `ExplainAsync(stages)`, so its test doesn't depend on the learner's other steps,
+  and Step 9's test uses its own explain so it doesn't depend on Step 8.
+- The optimiser **moves a `$match` ahead of a `$sort` for you** (identical plans, same answer) but cannot
+  rescue a `$limit` that runs too early (`[4,3,2]` instead of `[10,9,8,7,6]`). That is the honest answer to
+  "does stage order matter?", and it's the Level up comparison. An earlier draft of SOLUTIONS claimed you
+  could *see* this in Step 8's plan; you can't — Step 8's `$match` is already first. Corrected.
+
+### Tests use their own database; `tools/seed` is for the learner
+
+Part 2's tests run in `santas_workshop_part2_tests`, never `santas_workshop`. They can't overwrite what a
+learner is exploring in Compass, and they can't collide with Part 1's tests when `dotnet test` runs both
+(proved: both solved, run together from the repo root, three times, 213 green each time). Because the
+tests no longer leave data behind, **`tools/seed`** loads the practice data on demand
+(`dotnet run --project tools/seed`): it resets `toys`, `orders` and `ledger` in `santas_workshop`, prints the
+Compass connection string, masks any password from `MONGODB_URI`, and exits 1 with a plain message when
+MongoDB is down. The doctor's "catalogue is empty" note now points at it. Collections are dropped rather
+than emptied, so an index created by Step 9 can't leak into the next test.
+
+### CI and the content tests now cover every written part
+
+- The red/green job is a **matrix** over parts (`folder`), so adding Part 3A is one row. Part 1's check
+  name is unchanged ("Part 1 — red on starter, green on solutions"), so a branch-protection rule naming it
+  keeps working. `fail-fast: false`, so one broken part doesn't hide the rest.
+- The content tests used to audit only *released* parts. They now audit every part whose README exists,
+  so Part 2's links, headings, `<details>` and code blocks were checked before release, and release really
+  is just the flag. New guards: every README step has a solution; every objective in `objective-map.md`
+  appears in the README's checklist (the project's own "coverage is the contract"); a written part can't
+  still be marked ⬜ in the map. Checked for teeth by planting seven defects (a tie in the data, a price on an
+  order line, the unknown toy "fixed", a dead link, a renamed step, a reworded objective, a deleted
+  solution): 8 tests failed, one or more for each, and after restoring, the suite was green.
+
+### Corrections found along the way
+
+- **The objective map had drifted from the brief.** The brief writes `$gt, $lt, $gte, $lte` and
+  `$and, $or` with commas; the map dropped them and Part 1's README had them in only one of the two. The
+  new coverage test found it. Both files now match the brief (checked in the original brief text, not by
+  guess).
+- **.NET 10 breaks `ToListAsync()` on a LINQ query** unless `using MongoDB.Driver.Linq;` is present: the
+  compiler falls through to `System.Linq.AsyncEnumerable.ToListAsync` and reports a baffling `CS0411`.
+  Documented where the LINQ alternative is shown.
+- **`$count` returns no document on zero matches** (so `FirstOrDefault` is `null`); there's a test for it.
+- `PipelineDefinition.ToString()`, a typed `Aggregate()` chain's and a LINQ query's all print the exact
+  pipeline sent — used as the README's "see what you sent" tip.
+- Tooling: macOS `sips` always crops from the centre (that was the favicon bug too); and the session
+  scratchpad was wiped when the date rolled over, taking helper scripts with it — keep anything reusable in
+  the repo (or in `tools/`), not only in the scratchpad.
+
+### Not verified, and said so
+
+Nobody has clicked through the Compass steps; the `explain` steps haven't run on Atlas M0; the core path is
+untimed. All three are in "Still unverified".

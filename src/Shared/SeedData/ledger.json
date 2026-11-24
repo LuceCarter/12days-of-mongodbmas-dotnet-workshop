@@ -1,0 +1,476 @@
+[
+  {
+    "child": "Ingrid",
+    "season": "current",
+    "deed": "Fed the dog from the table",
+    "points": -1
+  },
+  {
+    "child": "Diego",
+    "season": "current",
+    "deed": "Stayed up past bedtime three nights running",
+    "points": -2
+  },
+  {
+    "child": "Diego",
+    "season": "current",
+    "deed": "Helped a neighbour carry their shopping",
+    "points": 4
+  },
+  {
+    "child": "Zainab",
+    "season": "current",
+    "deed": "Said sorry first",
+    "points": 3
+  },
+  {
+    "child": "Chen",
+    "season": "current",
+    "deed": "Tidied their room without being asked",
+    "points": 2
+  },
+  {
+    "child": "Nia",
+    "season": "current",
+    "deed": "Held the door for a stranger",
+    "points": 2
+  },
+  {
+    "child": "Willow",
+    "season": "current",
+    "deed": "Picked up litter at the park",
+    "points": 4
+  },
+  {
+    "child": "Sofia",
+    "season": "current",
+    "deed": "Tidied their room without being asked",
+    "points": 2
+  },
+  {
+    "child": "Hemi",
+    "season": "current",
+    "deed": "Said sorry first",
+    "points": 3
+  },
+  {
+    "child": "Willow",
+    "season": "current",
+    "deed": "Made a card for a grandparent",
+    "points": 5
+  },
+  {
+    "child": "Kwame",
+    "season": "current",
+    "deed": "Drew on the wall",
+    "points": -3
+  },
+  {
+    "child": "Diego",
+    "season": "current",
+    "deed": "Drew on the wall",
+    "points": -3
+  },
+  {
+    "child": "Diego",
+    "season": "current",
+    "deed": "Hid the broccoli in a plant pot",
+    "points": -2
+  },
+  {
+    "child": "Tomás",
+    "season": "current",
+    "deed": "Pulled the cat's tail",
+    "points": -5
+  },
+  {
+    "child": "Isla",
+    "season": "current",
+    "deed": "Raised money for the animal shelter",
+    "points": 10
+  },
+  {
+    "child": "Diego",
+    "season": "previous",
+    "deed": "Said sorry first",
+    "points": 2
+  },
+  {
+    "child": "Priya",
+    "season": "current",
+    "deed": "Fed the neighbour's cat all week",
+    "points": 5
+  },
+  {
+    "child": "Hiroshi",
+    "season": "current",
+    "deed": "Picked up litter at the park",
+    "points": 4
+  },
+  {
+    "child": "Priya",
+    "season": "previous",
+    "deed": "Tidied their room without being asked",
+    "points": 2
+  },
+  {
+    "child": "Mei",
+    "season": "previous",
+    "deed": "Made a card for a grandparent",
+    "points": 5
+  },
+  {
+    "child": "Elsa",
+    "season": "current",
+    "deed": "Hid the broccoli in a plant pot",
+    "points": -2
+  },
+  {
+    "child": "Hiroshi",
+    "season": "current",
+    "deed": "Helped a neighbour carry their shopping",
+    "points": 4
+  },
+  {
+    "child": "Oliver",
+    "season": "current",
+    "deed": "Read to a younger sibling",
+    "points": 5
+  },
+  {
+    "child": "Ingrid",
+    "season": "current",
+    "deed": "Shared their last biscuit",
+    "points": 3
+  },
+  {
+    "child": "Sofia",
+    "season": "previous",
+    "deed": "Broke a neighbour's window with a football, then hid",
+    "points": -20
+  },
+  {
+    "child": "Emma",
+    "season": "current",
+    "deed": "Refused to eat sprouts, loudly",
+    "points": -2
+  },
+  {
+    "child": "Mia",
+    "season": "current",
+    "deed": "Read to a younger sibling",
+    "points": 5
+  },
+  {
+    "child": "Oliver",
+    "season": "current",
+    "deed": "Hung up their own coat",
+    "points": 1
+  },
+  {
+    "child": "Jack",
+    "season": "previous",
+    "deed": "Held the door for a stranger",
+    "points": 2
+  },
+  {
+    "child": "Yuki",
+    "season": "current",
+    "deed": "Made a card for a grandparent",
+    "points": 5
+  },
+  {
+    "child": "Amara",
+    "season": "current",
+    "deed": "Held the door for a stranger",
+    "points": 2
+  },
+  {
+    "child": "Yuki",
+    "season": "current",
+    "deed": "Read to a younger sibling",
+    "points": 5
+  },
+  {
+    "child": "Nia",
+    "season": "current",
+    "deed": "Drew on the wall",
+    "points": -3
+  },
+  {
+    "child": "Mateo",
+    "season": "current",
+    "deed": "Hid the broccoli in a plant pot",
+    "points": -2
+  },
+  {
+    "child": "Sofia",
+    "season": "current",
+    "deed": "Sat with a lonely classmate at lunch",
+    "points": 9
+  },
+  {
+    "child": "Priya",
+    "season": "current",
+    "deed": "Taught a friend to tie their shoelaces",
+    "points": 7
+  },
+  {
+    "child": "Isla",
+    "season": "previous",
+    "deed": "Read to a younger sibling",
+    "points": 5
+  },
+  {
+    "child": "Hemi",
+    "season": "previous",
+    "deed": "Helped out at the food bank",
+    "points": 10
+  },
+  {
+    "child": "Anika",
+    "season": "current",
+    "deed": "Tidied their room without being asked",
+    "points": 2
+  },
+  {
+    "child": "Matilda",
+    "season": "current",
+    "deed": "Refused to eat sprouts, loudly",
+    "points": -2
+  },
+  {
+    "child": "Camila",
+    "season": "current",
+    "deed": "Picked up litter at the park",
+    "points": 4
+  },
+  {
+    "child": "Charlotte",
+    "season": "previous",
+    "deed": "Fed the neighbour's cat all week",
+    "points": 5
+  },
+  {
+    "child": "Lucas",
+    "season": "current",
+    "deed": "Picked up litter at the park",
+    "points": 4
+  },
+  {
+    "child": "Charlotte",
+    "season": "previous",
+    "deed": "Helped a neighbour carry their shopping",
+    "points": 4
+  },
+  {
+    "child": "Mateo",
+    "season": "current",
+    "deed": "Planted a tree in the school garden",
+    "points": 6
+  },
+  {
+    "child": "Tomás",
+    "season": "current",
+    "deed": "Said sorry first",
+    "points": 3
+  },
+  {
+    "child": "Hemi",
+    "season": "previous",
+    "deed": "Rescued a kitten stuck in a tree",
+    "points": 12
+  },
+  {
+    "child": "Jack",
+    "season": "current",
+    "deed": "Hung up their own coat",
+    "points": 1
+  },
+  {
+    "child": "Chen",
+    "season": "current",
+    "deed": "Shared their last biscuit",
+    "points": 3
+  },
+  {
+    "child": "Elsa",
+    "season": "current",
+    "deed": "Helped a neighbour carry their shopping",
+    "points": 4
+  },
+  {
+    "child": "Rohan",
+    "season": "current",
+    "deed": "Held the door for a stranger",
+    "points": 2
+  },
+  {
+    "child": "Rohan",
+    "season": "current",
+    "deed": "Hung up their own coat",
+    "points": 1
+  },
+  {
+    "child": "Hemi",
+    "season": "current",
+    "deed": "Blamed the elves for the cocoa",
+    "points": -4
+  },
+  {
+    "child": "Emma",
+    "season": "current",
+    "deed": "Tidied their room without being asked",
+    "points": 2
+  },
+  {
+    "child": "Willow",
+    "season": "current",
+    "deed": "Drew on the wall",
+    "points": -3
+  },
+  {
+    "child": "Tomás",
+    "season": "current",
+    "deed": "Stayed up past bedtime three nights running",
+    "points": -2
+  },
+  {
+    "child": "Hemi",
+    "season": "current",
+    "deed": "Spilled cocoa on the entire letter M",
+    "points": -10
+  },
+  {
+    "child": "Kwame",
+    "season": "current",
+    "deed": "Shared their last biscuit",
+    "points": 3
+  },
+  {
+    "child": "Zainab",
+    "season": "current",
+    "deed": "Fed the neighbour's cat all week",
+    "points": 5
+  },
+  {
+    "child": "Lucas",
+    "season": "current",
+    "deed": "Held the door for a stranger",
+    "points": 2
+  },
+  {
+    "child": "Oliver",
+    "season": "previous",
+    "deed": "Told a fib about the last biscuit",
+    "points": -3
+  },
+  {
+    "child": "Hiroshi",
+    "season": "current",
+    "deed": "Hung up their own coat",
+    "points": 1
+  },
+  {
+    "child": "Anika",
+    "season": "current",
+    "deed": "Helped a neighbour carry their shopping",
+    "points": 4
+  },
+  {
+    "child": "Amara",
+    "season": "current",
+    "deed": "Made a card for a grandparent",
+    "points": 5
+  },
+  {
+    "child": "Camila",
+    "season": "current",
+    "deed": "Made a card for a grandparent",
+    "points": 5
+  },
+  {
+    "child": "Matilda",
+    "season": "current",
+    "deed": "Hung up their own coat",
+    "points": 1
+  },
+  {
+    "child": "Amara",
+    "season": "current",
+    "deed": "Said sorry first",
+    "points": 3
+  },
+  {
+    "child": "Oliver",
+    "season": "current",
+    "deed": "Pulled the cat's tail",
+    "points": -5
+  },
+  {
+    "child": "Mateo",
+    "season": "current",
+    "deed": "Picked up litter at the park",
+    "points": 4
+  },
+  {
+    "child": "Tomás",
+    "season": "current",
+    "deed": "Left wet towels on the floor",
+    "points": -1
+  },
+  {
+    "child": "Kwame",
+    "season": "previous",
+    "deed": "Picked up litter at the park",
+    "points": 4
+  },
+  {
+    "child": "Sofia",
+    "season": "current",
+    "deed": "Said sorry first",
+    "points": 3
+  },
+  {
+    "child": "Mia",
+    "season": "current",
+    "deed": "Hung up their own coat",
+    "points": 1
+  },
+  {
+    "child": "Kwame",
+    "season": "current",
+    "deed": "Organised a toy swap for the whole street",
+    "points": 8
+  },
+  {
+    "child": "Elsa",
+    "season": "current",
+    "deed": "Fed the dog from the table",
+    "points": -1
+  },
+  {
+    "child": "Rohan",
+    "season": "current",
+    "deed": "Left wet towels on the floor",
+    "points": -1
+  },
+  {
+    "child": "Chen",
+    "season": "current",
+    "deed": "Refused to eat sprouts, loudly",
+    "points": -2
+  },
+  {
+    "child": "Isla",
+    "season": "current",
+    "deed": "Helped a neighbour carry their shopping",
+    "points": 4
+  },
+  {
+    "child": "Jack",
+    "season": "current",
+    "deed": "Pulled the cat's tail",
+    "points": -5
+  }
+]

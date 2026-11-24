@@ -14,3 +14,5 @@ LandingPage/wwwroot/appsettings.Development.json
 TestResults/
 publish/
 LandingPage/wwwroot/content/
+__pycache__/
+*.pyc

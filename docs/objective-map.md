@@ -21,8 +21,8 @@ and green on the published solutions. Verified 2026-11-03.
 | 1.2 | Find a single document using `Find()` and implicit equality | Step 2 · `FindByNameAsync` | `Step02_FindByName_FindsIt`, `…_ReturnsNullForUnknown` | ✅ |
 | 1.3 | Use `$set` with `UpdateOne()` to replace a field's value | Step 3 · `UpdatePriceAsync` | `Step03_UpdatePrice_ChangesOnlyThatField` | ✅ |
 | 1.4 | Write a `DeleteMany()` that deletes all documents matching a query | Step 4 · `RemoveDiscontinuedAsync` | `Step04_RemoveDiscontinued_DeletesOnlyThose` | ✅ |
-| 2.1 | Limit results with comparison operators `$gt` `$lt` `$gte` `$lte` | Steps 5–6 · `FindUnderPriceAsync`, `FindForAgeAsync` | `Step05_…_ReturnsCheapToys`, `Step05_…_IsExclusive`, `Step06_…_ReturnsToysSpanningThatAge`, `Step06_…_DoesNotInvertTheComparisons` | ✅ |
-| 2.2 | Limit results with logical operators `$and` `$or` | Steps 7–8 · `FindInStockForAgeBandAsync`, `FindPuzzlesOrBoardGamesAsync` | `Step07_…_CombinesAllThreeConditions`, `Step08_…_ReturnsBothCategories` | ✅ |
+| 2.1 | Limit results with comparison operators `$gt`, `$lt`, `$gte`, `$lte` | Steps 5–6 · `FindUnderPriceAsync`, `FindForAgeAsync` | `Step05_…_ReturnsCheapToys`, `Step05_…_IsExclusive`, `Step06_…_ReturnsToysSpanningThatAge`, `Step06_…_DoesNotInvertTheComparisons` | ✅ |
+| 2.2 | Limit results with logical operators `$and`, `$or` | Steps 7–8 · `FindInStockForAgeBandAsync`, `FindPuzzlesOrBoardGamesAsync` | `Step07_…_CombinesAllThreeConditions`, `Step08_…_ReturnsBothCategories` | ✅ |
 | 2.3 | Query an array field using an equality constraint with a scalar value | Step 9 · `FindByTagAsync` | `Step09_…_FindsEveryDinosaur`, `…_MatchesAnyPositionInTheArray`, `…_UnknownTagReturnsEmpty` | ✅ |
 | 3.1 | Use sort and limit to refine results | Step 10 · `FindCheapestInStockAsync` | `Step10_…_ReturnsTheFiveCheapest`, `…_IsAscending`, `…_RespectsTheLimit` | ✅ |
 | 3.2 | Use projection with `Find()` to return selected fields | Step 11 · `GetShelfLabelsAsync` | `Step11_…_ReturnsNameAndPriceForEveryToy`, `…_CarriesTheCorrectPrice` | ✅ |
@@ -64,10 +64,53 @@ against `src/Shared/SeedData/toys.json` (34 toys). Verified 2026-11-03:
 ---
 
 ## Part 2 — The Naughty/Nice Ledger
-**Anchor badge:** Fundamentals of Data Transformation · **Release:** Dec 5
+**Anchor badge:** Fundamentals of Data Transformation · **Level:** Beginner · **Release:** Dec 5
+
+**Status: ✅ complete.** 5/5 objectives covered, 24 tests, all red on the starter code and green
+on the published solutions. Verified 2026-11-18. The one 🖐️ is the Compass half of the last
+objective, which a test cannot click through — see the note below the table.
 
 | Objective | Step | Test | Status |
 |---|---|---|---|
+| Define the aggregation framework and explain why stage order matters | Steps 1–2 · `CountOpenOrdersAsync`, `ScoresThisSeasonAsync` | `Step01_…_CountsThisSeasonsOpenOrders`, `…_ReturnsZeroWhenNothingMatches`, `Step02_…_ReturnsEveryChildWithDeedsThisSeason`, `…_TotalsEachChildsPoints`, `…_IgnoresLastSeasonsDeeds` | ✅ |
+| Explain and build `$match` → `$unwind` → `$group` → `$project` | Steps 3–5 · `ToysToMakeAsync`, `DemandByRegionAsync`, `VerdictsAsync` | `Step03_…_TotalsTheQuantityOfEachToy`, `…_ListsEachToyOnce`, `…_LeavesOutPackedAndLastSeasonsOrders`, `Step04_…_TotalsOneToyInEachRegion`, `…_CountsOnlyThatToysQuantity`, `…_NoOpenDemandReturnsNothing`, `Step05_…_SaysNiceOrNaughtyForEveryChild`, `…_AScoreOfZeroIsNice`, `…_IgnoresLastSeason` | ✅ |
+| Explain and build `$match` → `$sort` → `$limit` | Step 6 · `KindestDeedsAsync` | `Step06_…_ReturnsTheBestFive`, `…_IsBestFirstAndIgnoresLastSeason`, `…_RespectsTheCount` | ✅ |
+| Use `$lookup` and `$set` | Step 7 · `LineCostsAsync` | `Step07_…_PricesEveryLineAtTheCataloguePrice`, `…_LeavesOutToysWeDoNotMake`, `…_UsesTodaysPrice` | ✅ |
+| Access `explain()` plans in the MongoDB Shell and Compass | Steps 8–9 · `ExplainAsync`, `CreateSeasonStatusIndexAsync` | `Step08_…_ShowsACollectionScan`, `…_ReportsDocumentsExaminedAndReturned`, `Step09_…_IsCreatedOnSeasonThenStatus`, `…_MakesTheServerUseIt` | ✅ 🖐️ |
+
+> **The Compass half of objective 5** is 🖐️: xUnit can't prove a learner clicked through Compass. The
+> shell and driver halves are tested automatically (the explain command, `COLLSCAN` → `IXSCAN`,
+> documents examined 46 → 22). The Compass half is covered by exact click-by-click instructions in
+> Step 8 and a self-tick row on the README's badge checklist. The Compass steps (Aggregations tab →
+> **Explain** → Explain Plan modal → Visual Tree / Raw Output; Indexes tab → **Create Index**) were
+> checked against the current Compass documentation, not remembered. They have **not** been clicked
+> through by a person on this machine — worth doing once before release.
+
+**Seed data check** — verified 2026-11-18 against `orders.json` and `ledger.json` (and asserted by
+`SeedDataContractTests`, so a data edit that breaks one of these fails a test instead of the README):
+
+| Fact the steps rely on | Value |
+|---|---|
+| Orders | 46: 36 current (22 open, 9 packed, 5 delivered) + 10 previous, **2 of them still open** |
+| Ledger entries | 79: 67 current + 12 previous |
+| Open orders this season (Step 1) | 22 — and 24 if the season is forgotten |
+| Dinosaur puzzle still to make (Step 3) | 11 — and 14 if the season is forgotten |
+| Regions wanting the dinosaur puzzle (Step 4) | 5; Europe wants 1 (2 if the second `$match` is missing) |
+| Children with deeds this season (Steps 2, 5) | 26: 20 nice, 6 naughty, **one on exactly 0** |
+| Verdicts that flip if the season is ignored (Step 5) | Sofia, Hemi, Oliver |
+| Top five kind deeds (Step 6) | 10, 9, 8, 7, 6 — all different, so no ties; a +12 from last season beats them all |
+| Open lines / lines surviving `$lookup` (Step 7) | 50 / 48 — two lines ask for a toy not in the catalogue |
+| Documents examined, no index / with index (Steps 8–9) | 46 / 22 (22 returned both times) |
+
+### Stretch — none
+
+The brief lists no stretch badge for Part 2. Its Level up still pairs Step 9 with Part 1's Indexing
+Design Fundamentals stretch, and adds the "badly ordered vs well ordered" comparison from the
+brief's Santa-mapping ideas. The brief's optional extra (a change stream powering a live order
+board) is **not** built: it isn't assessed, and every other snippet in this part was run before it
+was written down.
+
+---|---|---|---|
 | Define the aggregation framework and explain why stage order matters | — | — | ⬜ |
 | Explain and build `$match` → `$unwind` → `$group` → `$project` | — | — | ⬜ |
 | Explain and build `$match` → `$sort` → `$limit` | — | — | ⬜ |

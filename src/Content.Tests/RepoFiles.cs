@@ -37,8 +37,21 @@ internal static class RepoFiles
                 p.GetProperty("Available").GetBoolean()))
             .ToList();
 
-    /// <summary>The catalog exactly as the landing page will build it from appsettings.json.</summary>
-    public static ContentCatalog Catalog() => ContentCatalog.Create(Parts());
+    /// <summary>
+    /// Parts that exist in the repository: released ones, plus any with a README already written.
+    /// A part being written is audited exactly like a released one, so when it is released the
+    /// only change is the <c>"Available"</c> flag.
+    /// </summary>
+    public static IReadOnlyList<PartSource> WrittenParts() =>
+        Parts().Where(p => p.Available || Exists($"{p.Folder}/README.md")).ToList();
+
+    /// <summary>
+    /// The catalog as the landing page will build it once every <em>written</em> part is released.
+    /// (The live site only includes parts with <c>"Available": true</c>; this is deliberately wider
+    /// so unreleased parts' pages are checked too.)
+    /// </summary>
+    public static ContentCatalog Catalog() =>
+        ContentCatalog.Create(WrittenParts().Select(p => p with { Available = true }));
 
     public static MarkdownRenderer Renderer() => new(Catalog(), RepoUrl);
 }

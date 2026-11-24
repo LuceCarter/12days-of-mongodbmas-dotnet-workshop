@@ -78,11 +78,12 @@ dotnet run --project tools/doctor
 ```
 docker-compose.yml       MongoDB with Search and Vector Search, for local work
 tools/doctor/            Environment check — run this first, and whenever things break
+tools/seed/              Loads practice data into the database, for exploring in Compass and the shell
 tools/site-routes/       Lists every URL the landing page serves (used by the deploy)
-src/Shared/              The Toy model, seed data and connection helpers
+src/Shared/              The models (Toy, Order, LedgerEntry), seed data and connection helpers
 src/Content/             Renders this repo's markdown for the landing page (and its tests)
 part1-inventory/         Part 1: README, Starter/, Tests/, SOLUTIONS.md
-part2-ledger/            Part 2 …
+part2-ledger/            Part 2: README, Starter/, Tests/, SOLUTIONS.md
 part3a-search/
 part3b-vector-search/
 part4-elf-assistant/

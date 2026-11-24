@@ -45,6 +45,17 @@ public static class MongoContext
     public static IMongoDatabase GetDatabase(IMongoClient? client = null) =>
         (client ?? CreateClient()).GetDatabase(DatabaseName);
 
+    /// <summary>A database other than the practice one. The Part 2 tests use their own so they
+    /// never overwrite the data you are exploring in Compass or the shell.</summary>
+    public static IMongoDatabase GetDatabase(IMongoClient client, string databaseName) =>
+        client.GetDatabase(databaseName);
+
     public static IMongoCollection<Toy> GetToys(IMongoClient? client = null) =>
         GetDatabase(client).GetCollection<Toy>("toys");
+
+    public static IMongoCollection<Order> GetOrders(IMongoClient? client = null) =>
+        GetDatabase(client).GetCollection<Order>("orders");
+
+    public static IMongoCollection<LedgerEntry> GetLedger(IMongoClient? client = null) =>
+        GetDatabase(client).GetCollection<LedgerEntry>("ledger");
 }

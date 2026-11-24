@@ -8,6 +8,8 @@
 #   2. The code published in SOLUTIONS.md must PASS every test. Not a copy of it
 #      on a branch — the actual markdown, extracted at build time, so the docs
 #      cannot drift away from working code.
+#
+# Each part is one row in the matrix on the `parts` job below.
 
 name: CI
 
@@ -27,9 +29,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  part1:
-    name: Part 1 — red on starter, green on solutions
+  parts:
+    # The check name for Part 1 is unchanged ("Part 1 — red on starter, green on solutions"),
+    # so any branch-protection rule that names it keeps working.
+    name: Part ${{ matrix.part.id }} — red on starter, green on solutions
     runs-on: ubuntu-24.04
+
+    strategy:
+      # One broken part must not hide the others: the point is to see WHICH parts are broken.
+      fail-fast: false
+      matrix:
+        # To add a part, add a row. Everything below works from `folder`.
+        part:
+          - { id: "1", folder: part1-inventory }
+          - { id: "2", folder: part2-ledger }
 
     services:
       mongodb:
@@ -86,7 +99,7 @@ jobs:
       - name: The starter code must fail every test
         run: |
           set +e
-          dotnet test part1-inventory/Tests --configuration Release --no-build
+          dotnet test ${{ matrix.part.folder }}/Tests --configuration Release --no-build
           status=$?
           set -e
 
@@ -94,7 +107,7 @@ jobs:
           # Anything else (crash, no tests discovered, bad arguments) is its own bug
           # and must not be mistaken for a healthy red.
           if [ "$status" -eq 0 ]; then
-            echo "::error::Part 1 passes without the learner writing anything. The exercise is broken."
+            echo "::error::Part ${{ matrix.part.id }} passes without the learner writing anything. The exercise is broken."
             exit 1
           elif [ "$status" -ne 2 ]; then
             echo "::error::Expected failing tests (exit 2) but the test run exited $status."
@@ -104,19 +117,19 @@ jobs:
           echo "Starter code is red, as it should be."
 
       - name: Paste in the published solutions
-        run: python3 .github/scripts/apply-solutions.py part1-inventory
+        run: python3 .github/scripts/apply-solutions.py ${{ matrix.part.folder }}
 
       - name: The published solutions must pass every test
         run: |
           dotnet build --configuration Release
-          dotnet test part1-inventory/Tests --configuration Release --no-build
+          dotnet test ${{ matrix.part.folder }}/Tests --configuration Release --no-build
 
       - name: Confirm nothing but the starter changed
         # Cheap guard against the applier wandering into the tests or shared code
         # and quietly making the green run meaningless.
         run: |
           git diff --name-only
-          stray=$(git diff --name-only | grep -v '^part1-inventory/Starter/' || true)
+          stray=$(git diff --name-only | grep -v '^${{ matrix.part.folder }}/Starter/' || true)
           if [ -n "$stray" ]; then
             echo "::error::apply-solutions.py modified files outside Starter/: $stray"
             exit 1

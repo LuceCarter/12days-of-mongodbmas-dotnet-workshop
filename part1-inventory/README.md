@@ -462,7 +462,7 @@ Every objective the badge assesses, and the step that teaches it.
 | ☐ | **1.2** Find a single document using `Find()` and implicit equality | Step 2 | `FindByNameAsync` |
 | ☐ | **1.3** Use `$set` with `UpdateOne()` to replace a field's value | Step 3 | `UpdatePriceAsync` |
 | ☐ | **1.4** Write a `DeleteMany()` that deletes all documents matching a query | Step 4 | `RemoveDiscontinuedAsync` |
-| ☐ | **2.1** Limit results with comparison operators `$gt` `$lt` `$gte` `$lte` | Steps 5, 6 | `FindUnderPriceAsync`, `FindForAgeAsync` |
+| ☐ | **2.1** Limit results with comparison operators `$gt`, `$lt`, `$gte`, `$lte` | Steps 5, 6 | `FindUnderPriceAsync`, `FindForAgeAsync` |
 | ☐ | **2.2** Limit results with logical operators `$and`, `$or` | Steps 7, 8 | `FindInStockForAgeBandAsync`, `FindPuzzlesOrBoardGamesAsync` |
 | ☐ | **2.3** Query an array field using an equality constraint with a scalar value | Step 9 | `FindByTagAsync` |
 | ☐ | **3.1** Use sort and limit to refine results | Step 10 | `FindCheapestInStockAsync` |

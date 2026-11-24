@@ -66,6 +66,7 @@ The code finds it automatically, so you don't need to set anything.
 | Stop, **delete** data and search indexes | `docker compose down -v` |
 | See what MongoDB is doing | `docker compose logs -f mongodb` |
 | Open a shell against it | `docker compose exec mongodb mongosh -u workshop -p workshop --authenticationDatabase admin` |
+| Load (or reset) the practice data to explore in Compass and the shell | `dotnet run --project tools/seed` |
 
 ---
 

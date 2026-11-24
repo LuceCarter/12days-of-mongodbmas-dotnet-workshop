@@ -9,6 +9,13 @@
   <Folder Name="/part1-inventory/Tests/">
     <Project Path="part1-inventory/Tests/Part1.Tests.csproj" />
   </Folder>
+  <Folder Name="/part2-ledger/" />
+  <Folder Name="/part2-ledger/Starter/">
+    <Project Path="part2-ledger/Starter/Part2.Starter.csproj" />
+  </Folder>
+  <Folder Name="/part2-ledger/Tests/">
+    <Project Path="part2-ledger/Tests/Part2.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Content/">
     <Project Path="src/Content/SantasWorkshop.Content.csproj" />
@@ -20,6 +27,9 @@
     <Project Path="src/Shared/SantasWorkshop.Shared.csproj" />
   </Folder>
   <Folder Name="/tools/" />
+  <Folder Name="/tools/seed/">
+    <Project Path="tools/seed/SantasWorkshop.Seed.csproj" />
+  </Folder>
   <Folder Name="/tools/site-routes/">
     <Project Path="tools/site-routes/SantasWorkshop.SiteRoutes.csproj" />
   </Folder>

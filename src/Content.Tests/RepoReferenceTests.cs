@@ -60,9 +60,9 @@ public sealed class RepoReferenceTests
     }
 
     [Fact]
-    public void Every_released_part_says_where_to_get_the_code_and_which_file_to_edit()
+    public void Every_written_part_says_where_to_get_the_code_and_which_file_to_edit()
     {
-        foreach (var part in RepoFiles.Parts().Where(p => p.Available))
+        foreach (var part in RepoFiles.WrittenParts())
         {
             var readme = RepoFiles.Read($"{part.Folder}/README.md");
 
