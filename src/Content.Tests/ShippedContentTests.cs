@@ -193,6 +193,35 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void Part_3B_has_all_eight_steps_in_its_table_of_contents_and_all_eight_solutions()
+    {
+        var steps = Rendered["parts/3B"].Toc
+            .Where(t => t.Level == 3)
+            .Select(t => Regex.Match(t.Text, @"^Step (\d+) —"))
+            .Where(m => m.Success)
+            .Select(m => int.Parse(m.Groups[1].Value))
+            .ToList();
+
+        Assert.Equal(Enumerable.Range(1, 8), steps);
+        Assert.Equal(8, Regex.Matches(Rendered["parts/3B/solutions"].Html, @"<summary><b>Step (\d+) —").Count);
+    }
+
+    [Fact]
+    public void Part_3B_teaches_the_dimensions_trap_where_a_reader_cannot_miss_it()
+    {
+        // Atlas builds a vector index with the wrong numDimensions and reports it ready. That silent
+        // failure must stay prominent: a warning above the story, its own section, and the step where it bites.
+        var readme = RepoFiles.Read("part3b-vector-search/README.md");
+        var firstScreen = readme[..readme.IndexOf("## The story", StringComparison.Ordinal)];
+
+        Assert.Contains("trap", firstScreen);
+        Assert.Contains("## The trap: the number of dimensions", readme);
+        Assert.Contains("### Step 4 — Fix the elf's index", readme);
+        Assert.Contains("trap", readme[readme.IndexOf("### Step 4", StringComparison.Ordinal)..readme.IndexOf("### Step 5", StringComparison.Ordinal)]);
+        Assert.Contains("trap", readme[readme.IndexOf("## Badge checklist", StringComparison.Ordinal)..readme.IndexOf("## 📋 From C# to the badge", StringComparison.Ordinal)]);
+    }
+
+    [Fact]
     public void Every_step_in_a_readme_has_a_matching_solution()
     {
         // The two files are written separately, so nothing else stops a step being added to one and

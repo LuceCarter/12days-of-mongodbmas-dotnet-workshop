@@ -190,20 +190,91 @@ The brief lists no stretch badge for Part 3A.
 ---
 
 ## Part 3B — Finding the Perfect Gift: Vector Search
-**Anchor badge:** Vector Search Fundamentals · **Release:** Dec 13
+**Anchor badge:** Vector Search Fundamentals · **Level:** Intermediate · **Release:** Dec 13
+
+**Status: ✅ complete.** 6/6 objectives covered, 44 tests, all red on the starter code and green on the published
+solutions. Verified 2026-11-24 against **real `voyage-3.5` vectors**, generated with `tools/embed`. Two things are
+🖐️ rather than tested: the Atlas UI half of objective 3, and the Voyage call (Step 7), which is tested only through
+a stand-in for the network.
 
 | Objective | Step | Test | Status |
 |---|---|---|---|
-| Define vectors, how they work, and the purpose of dimensions | — | — | ⬜ |
-| Explain how Atlas and an embedding model interact; HNSW at a high level | — | — | ⬜ |
-| Create a vector search index with the correct number of dimensions | — | — | ⬜ |
-| Understand similarity options (euclidean, cosine, dot product) | — | — | ⬜ |
-| Write a `$vectorSearch` aggregation query | — | — | ⬜ |
-| Understand how prefiltering affects performance | — | — | ⬜ |
+| Define vectors, how they work, and the purpose of dimensions | Steps 1–2 · `DescribeEmbeddingAsync`, `Compare` (and "What is vector search?") | `Step01_ReportsTheNumberOfDimensions`, `…_ReportsTheMagnitude`, `…_UnknownToyIsAnError`, `Step02_SameDirectionDifferentLength`, `…_KnownAngles`, `…_RealVectors`, `…_DifferentLengthsAreRejected` | ✅ |
+| Explain how Atlas and an embedding model interact; HNSW at a high level | Steps 3, 7, 8 · `ClosestByHandAsync`, `EmbedAsync`, `FindGiftsAsync` (and "Who does what?", "Why a vector index at all?") | `Step03_FindsTheClosestToys`, `…_AToyIsItsOwnNearestNeighbour`, `…_HonoursTheCount`, `Step07_SendsTheRightRequest`, `…_PassesTheInputTypeOn`, `…_ReturnsTheVector`, `…_ReportsAFailureWithoutLeakingTheKey`, `…_RejectsAVectorOfTheWrongLength`, `Step08_EmbedsTheQuestionThenSearches`, `…_AnAgeNarrowsTheSearch`, `…_NeedsAnEmbedder` | ✅ 🖐️ |
+| Create a vector search index with the correct number of dimensions | Step 4 · `CreateVectorIndexAsync` | `Step04_DeclaresTheRightNumberOfDimensions`, `…_TheIndexAnswersQueries`, `…_DeclaresTheFilterFields` | ✅ 🖐️ |
+| Understand similarity options (euclidean, cosine, dot product) | Steps 2, 4 · `Compare`, `CreateVectorIndexAsync` | `Step02_…`, `Step04_DefaultsToCosine`, `Step04_ScoresWithTheChosenSimilarity` (× 3) | ✅ |
+| Write a `$vectorSearch` aggregation query | Steps 5, 6, 8 · `FindSimilarAsync`, `GiftsForAgeAsync`, `FindGiftsAsync` | `Step05_MatchesTheBruteForceAnswer`, `…_AToyIsItsOwnNearestNeighbour`, `…_TheScoreIsTheRescaledCosine`, `…_HonoursTheCount`, `Step06_OnlyReturnsSuitableToys`, `…_FilteringDoesNotChangeAScore` | ✅ |
+| Understand how prefiltering affects performance | Step 6 · `GiftsForAgeAsync` | `Step06_APreFilterKeepsLookingUntilItHasEnough`, `…_OnlyReturnsSuitableToys`, `…_NothingMatchesTheFilter` | ✅ |
 
-### Stretch — Vector Search Performance
-| Objective | Step | Status |
+> **Meaning is tested on the real vectors.** `Step08_MeaningTests` asks each example question and checks the
+> right toy comes first: bedtime → Triceratops Night Light, palaeontologist → Dinosaur Dig Kit, rainy-day game →
+> Snakes and Ladders, mess and art → Finger Painting Set, night sky → Constellation Projector, small baby →
+> Stegosaurus Soft Toy, build with my hands → Wooden Tool Bench. (An eighth question, *a present for someone who
+> loves the outdoors*, finds a torch, a glider and a telescope: no clear winner, so it's used in the README as an
+> honest example of vector search being good, not magic, and has no test.) They assert the **order**, never the exact
+> scores, so a different model changes numbers, not the idea.
+>
+> **The Atlas UI half of objective 3** is 🖐️, as in Part 3A: the path is the same (**Search & Vector Search** →
+> **Create Search Index**, choosing the **Vector Search** type), but the *Vector Search* labels were not
+> separately checked against the docs, and nobody has clicked through it.
+>
+> **The Voyage call (Step 7)** is tested through a stand-in for the network: it checks what `EmbedAsync`
+> sends (endpoint, `Authorization: Bearer`, model, `input_type`, `output_dimension`) and how it handles a
+> reply, an error and a wrong-length vector. It has never talked to the real API.
+>
+> **The dimensions trap** is not a badge objective but is the likeliest silent failure, so it's taught in the
+> top-of-page warning, a dedicated section, Step 4 (a fix-the-bug with a shell recipe) and a checklist row,
+> and **guarded**: Step 4's test failure message spells out both layers.
+
+**What was measured** (Atlas Local 8.0.15; the first rows were measured on placeholder vectors, and re-checked on the real ones):
+
+| Behaviour | Result |
+|---|---|
+| Index declares 1536 dimensions, vectors are 1024, query has 1024 | status **READY**, `queryable`; error: `vector field is indexed with 1536 dimensions but queried with 1024` |
+| …same index, query padded to 1536 | **no error, no results** |
+| Stored vectors of the wrong length, or missing, or null | skipped silently |
+| Wrong index name | no results, no error |
+| `filter` on a field not declared `filter` | error: `Path 'cat' needs to be indexed as filter` |
+| `numCandidates` < `limit` | error: `limit should be less than or equal to numCandidates` |
+| `numCandidates` > 10000 | error: `"numCandidates" must be within bounds [1..10000]` |
+| No `numCandidates` and no `exact` | error: `numCandidates is required for approximate vector search` |
+| `exact: true` | works, no `numCandidates` |
+| Score, cosine / euclidean / dotProduct | `(1+cos)/2` / `1/(1+d²)` / `(1+dot)/2` (checked with 2-D vectors and, in Step 4's tests, on every hit) |
+| Pre-filter vs search-then-`$match` (2-D example) | pre-filter returned `limit` results; post-filter returned fewer |
+| `quantization: "scalar"` and `"binary"` (1024 dims) | both build and answer queries; scores differ slightly under scalar |
+| Time for a 1024-dim vector index over 34 documents to be `queryable` | well under a second |
+
+**Tool facts relied on (Voyage docs):** `POST https://api.voyageai.com/v1/embeddings`, `Authorization: Bearer`,
+`input_type` ∈ {`null`, `query`, `document`}, `voyage-3.5` default **1024** with `output_dimension` ∈ {2048, 1024,
+512, 256}, response `data[].embedding` / `data[].index`.
+
+**Measured on the real vectors (2026-11-24):** every vector from `tools/embed` has a norm of **1.0000** (min and max),
+so cosine and dot product rank identically, and the README says so as a measurement, not a promise. Exact and approximate
+search agree for the bedtime question over 34 toys. Scalar and binary quantization keep the order (night light 0.7715 plain
+and binary, 0.7711 scalar). Pre-filter vs post-filter with the Pocket Telescope's vector for age 3, five wanted: **5 vs 1**.
+
+**Not stated in the docs, so not claimed:** that Voyage vectors are normalised (measured, not promised), which similarity
+Voyage recommends. **Documented inconsistently:** free tokens for `voyage-3.5` (the rate-limits page says 200 million per
+model; the billing page lists `voyage-3.5` under older models with none). **Atlas-created keys use a different host:**
+`ai.mongodb.com`, not `api.voyageai.com` (`tools/embed` reads `VOYAGE_BASE_URL`; found when the first real run got a 403).
+
+### Stretch — Vector Search Performance (not assessed by the anchor badge)
+
+Taught only in Part 3B's **Level up**, and only in part. Marked honestly: the stretch badge is not covered
+by tests, and several of its objectives are a paragraph of thinking, not a built step.
+
+| Objective | Where | Status |
 |---|---|---|
+| How embeddings are created (generate with Voyage AI) | Step 7 (`EmbedAsync`) and `tools/embed`; the call is tested through a stand-in only | 🚧 taught, never run against the live API |
+| Compare database options for vector search | — | ⬜ not covered |
+| Reranking, and when to use it | Level up, "Rank again": a paragraph, not built | 🚧 concept only |
+| Choosing embedding models by workload / data type / quality / latency / cost | — | ⬜ not covered |
+| `voyage-context-3` for chunking challenges | — | ⬜ not covered (chunking arrives with Part 4A) |
+| Effects of dimensionality on quality, latency and cost | Level up: "Fewer dimensions" (needs a Voyage key) and "Compress the vectors" (scalar/binary quantization, run locally) | 🚧 quantization run; fewer-dimensions needs a key and was not run |
+| API-generated vs. database-managed auto-embeddings | Level up, "Who makes the vectors?": questions to think through | 🚧 concept only |
+| Using Voyage reranking models | — | ⬜ not built: the rerank API wasn't read or run |
+
+---|---|---|
 | How embeddings are created (generate with Voyage AI) | — | ⬜ |
 | Compare database options for vector search | — | ⬜ |
 | Reranking, and when to use it | — | ⬜ |

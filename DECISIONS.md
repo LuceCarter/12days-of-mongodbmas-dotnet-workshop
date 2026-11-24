@@ -209,6 +209,10 @@ Things to confirm before the part that depends on them ships.
       minute) and that the Decimal128 behaviour is the same there. *(Part 3A)*
 - [ ] **Time the Part 3A core path.** Ten steps; "about an hour" is an estimate. *(Part 3A)*
 
+- [x] ~~Run `tools/embed` with a real Voyage key~~ Done 2026-11-24 (see "Part 3B"). The two files still need committing.
+- [ ] **The Voyage call against the real API**, and the free tier's limits for `voyage-3.5`, which the docs don't state. *(Part 3B)*
+- [ ] **Someone creates the vector index in the Atlas UI** (labels for the Vector Search type weren't checked). *(Part 3B, Step 4)*
+
 ---
 
 ## Resolved
@@ -918,3 +922,107 @@ letting the README quietly teach something false.
 - The core path is **untimed**; "about an hour" is an estimate for ten steps.
 - Part 3A's badge URL is still `REPLACE_ME`, and its GitHub file links 404 until pushed.
 - Synonyms, highlighting and `$search` sort were not built: not assessed, and not run.
+
+## 2026-11-24 — Part 3B: Finding the Perfect Gift: Vector Search
+
+**Written and verified against real `voyage-3.5` vectors.** `"Available"` stays `false`: the badge URL is still a placeholder.
+A content test refuses a release without the vectors.
+
+### The blocker, and how it was handled (resolved)
+
+Part 3B ships pre-embedded data (decision 9 of the plan), which needs real `voyage-3.5` vectors for the 34 toys and
+the example questions. No `VOYAGE_API_KEY` exists in the build environment, and **no stand-in vectors are committed**.
+Agreed with Luce: **`tools/embed` is built and tested here; Luce runs it once with their own key** and commits the two
+files it writes (`src/Shared/SeedData/toy-embeddings.json`, `query-embeddings.json`). The key never enters a session.
+
+`tools/embed` was tested end to end against a **mock Voyage server** (a small script, kept out of the repo): it sends
+`Authorization: Bearer`, `voyage-3.5`, `input_type` `document` for toys and `query` for questions, `output_dimension` 1024;
+it handles responses out of order (output identical to the ordered one, using each item's `index`); and it writes
+**nothing**, exiting 1, on a bad key, wrong-length vectors or a missing vector. It prints the vectors' measured
+norm, because the Voyage docs don't say whether they are normalised.
+
+### What waited for the real vectors (all now done)
+
+1. A **semantic** test per example question (e.g. the bedtime question finds the night light): nothing about *meaning*
+   can be tested with placeholder vectors.
+2. The README's worked examples (what actually comes back).
+3. Whether the vectors are length 1, which decides what Step 2's README says about dot product.
+4. The CI matrix row for 3B (it would be red without the vectors), and the `Available` flag.
+
+### Design
+
+- **Eight steps** (`GiftFinder`, `VoyageEmbedder`): 1 describe a vector, 2 `Compare` (cosine, dot product, Euclidean by hand),
+  3 brute-force nearest, 4 fix the elf's index, 5 `$vectorSearch`, 6 pre-filter (with a pre-written post-filter to compare),
+  7 call the embedding model, 8 question → gift. Six objectives mapped in `docs/objective-map.md`.
+- **No key needed to finish Part 3B.** Step 7 is tested through a stand-in for the network (what it sends, and how it handles a
+  reply, an error and a wrong-length vector). The keys table in `docs/setup.md` is honest about this.
+- **Dimensions: 1024**, the model's default, so a learner's live call matches the shipped data with no extra parameter.
+  Only `description` is embedded (not name or tags) so the meaning comes from the sentence, and it matches what a learner
+  would do in the Level up.
+- **Objective 3 is a fix-the-bug, objective 4 is *computed*.** The elf's index declares 1536; the learner finds 1024 from Step 1.
+  Step 4's tests build all three similarities and check **every hit's score against the formula** on real data.
+
+### The dimensions trap — found by running it
+
+Atlas builds a vector index with the wrong `numDimensions` and reports it `READY` and `queryable`. Two layers (measured):
+a real-length query errors `vector field is indexed with 1536 dimensions but queried with 1024` (helpful); a query
+padded to the index's length returns **nothing, with no error**, because the stored vectors of the other length were skipped.
+Wrong-length or missing or null stored vectors are skipped silently. Taught in the top-of-page warning, a dedicated section,
+Step 4 (with a shell recipe that makes the server say it), a checklist row, and Step 4's failure message; a content test
+keeps it prominent.
+
+### Other measured behaviour (see `docs/objective-map.md` for the table)
+
+Wrong index name: silent empty. `filter` on an undeclared field, `numCandidates` < `limit`, `numCandidates` > 10000, no
+`numCandidates` without `exact`: all loud, with clear messages. Scores: cosine `(1+cos)/2`, euclidean `1/(1+d²)`, dotProduct
+`(1+dot)/2`. A pre-filter returned `limit` results where search-then-`$match` returned fewer. Scalar and binary quantization
+both build and answer.
+
+### Found along the way
+
+- **A real flake, fixed.** A red run left a scratch index with the *wrong* dimensions; the next run dropped and recreated the
+  collection under the same name, and a few runs queried the stale index. Search-index teardown is asynchronous. Scratch
+  collections now get unique names (and leftovers are cleaned at start), in **both** 3A and 3B; 7 red/green cycles and
+  25 further green runs were clean afterwards.
+- **`apply-solutions.py` matched mentions, not declarations.** `EmbedAsync(` is *called* in `GiftFinder.cs` and *declared* in
+  `VoyageEmbedder.cs`; it now matches only the declaration. Parts 1, 2, 3A and 3B all apply cleanly.
+- The mock server had to handle `Transfer-Encoding: chunked`: .NET's `PostAsJsonAsync` sends chunked bodies.
+- `tools/seed -- --embeddings` says so, in its own words, when the vectors aren't in the build (not "couldn't reach MongoDB").
+
+### Stretch — Vector Search Performance
+
+Only partly covered, by Level up, and said so in `docs/objective-map.md` (some objectives are `⬜ not covered`). Quantization
+and exact search were run; the 256-dimension re-embedding needs a key and wasn't; reranking and the Voyage rerank models
+weren't read or built.
+
+### Not verified, and said so
+
+- **Everything semantic** (above). **The Voyage call has never reached the real API** (`EmbedAsync` and `tools/embed` only met a mock).
+- **The Atlas UI vector-index steps**: the *Vector Search* index-type labels weren't separately checked against the docs.
+- **Atlas M0**: not run. **Timing**: "about an hour" for eight steps is an estimate.
+- The docs don't state vector normalisation, the recommended similarity, or the free tier's limits, so none is claimed.
+
+### Resolved 2026-11-24: the real vectors
+
+Luce ran `tools/embed`. **The first two runs got `403 Forbidden`**: the key was created in **MongoDB Atlas**, and Atlas keys
+authenticate against **`ai.mongodb.com`**, not `api.voyageai.com` (a key scoped to a region uses `us.`/`eu.ai.mongodb.com`).
+Found in the Voyage docs; `VOYAGE_BASE_URL=https://ai.mongodb.com` fixed it, and the same trap will catch learners with an
+Atlas key, so it's explained in Part 3B's Step 7, in `docs/setup.md` and here. The third run wrote 34 + 8 vectors, every one
+**norm 1.0000** (measured; the docs don't promise it). Three API keys were pasted into the session in the process and
+should be deleted in Atlas.
+
+- **Real-vector results:** the bedtime question finds the Triceratops Night Light first (0.7715), palaeontologist the Dinosaur Dig
+  Kit, rainy-day game Snakes and Ladders, mess and art the Finger Painting Set, night sky the Constellation Projector, small
+  baby the Stegosaurus Soft Toy, build with my hands the Wooden Tool Bench. *"A present for someone who loves the outdoors"*
+  gave a torch, a glider and a telescope: a fair example of "good, not magic", kept in the README and untested.
+- **44 tests** (34 mechanical + 10 on meaning), all red on the Starter and green on the solutions. The vectors' content test
+  now runs (it skips while the files are absent). The CI matrix has its 3B row.
+- **Pre-filter vs post-filter, real:** Pocket Telescope vector, age 3, five wanted: pre-filter returns 5, post-filter returns 1.
+- **Free tokens are documented inconsistently** (rate-limits page: 200M free tokens per model; billing page: none for
+  `voyage-3.5`). The generation cost 824 tokens, so it doesn't matter here; it may for learners who call Voyage live.
+
+### Still open
+
+`EmbedAsync`'s `Endpoint` is a constant for `api.voyageai.com`, so a learner with an Atlas key who calls Voyage *for real* gets the
+403. The exercises and tests never touch the network, so nothing fails; the README says to change the host. The proper fix
+(an endpoint taken from `VOYAGE_BASE_URL` in `FromEnvironment()`) wasn't made without Luce's go-ahead.

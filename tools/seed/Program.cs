@@ -13,6 +13,10 @@ using SantasWorkshop.Shared;
 // separate databases (`santas_workshop_part2_tests`, `santas_workshop_part3a_tests`) so they never overwrite what you are
 // exploring. This is for YOU, not for them.
 
+// Part 3B explores vectors in Compass and the shell, so it asks for the toys WITH their embeddings:
+//     dotnet run --project tools/seed -- --embeddings
+var withEmbeddings = args.Contains("--embeddings", StringComparer.OrdinalIgnoreCase);
+
 Console.WriteLine();
 Console.WriteLine("🎄 Santa's Workshop — loading the practice data");
 Console.WriteLine();
@@ -27,9 +31,9 @@ Console.WriteLine();
 try
 {
     var client = MongoContext.CreateClient();
-    var counts = await SeedLoader.ResetWorkshopAsync(MongoContext.GetDatabase(client));
+    var counts = await SeedLoader.ResetWorkshopAsync(MongoContext.GetDatabase(client), withEmbeddings: withEmbeddings);
 
-    Console.WriteLine($"   ✅ toys    {counts.Toys,3} documents");
+    Console.WriteLine($"   ✅ toys    {counts.Toys,3} documents{(withEmbeddings ? "  (each with a 1024-dimension vector, for Part 3B)" : "")}");
     Console.WriteLine($"   ✅ orders  {counts.Orders,3} documents");
     Console.WriteLine($"   ✅ ledger  {counts.Ledger,3} documents");
     Console.WriteLine();
@@ -37,6 +41,15 @@ try
     Console.WriteLine($"       {ConnectionStringForDisplay()}");
     Console.WriteLine();
     return 0;
+}
+catch (InvalidOperationException ex) when (withEmbeddings && ex.Message.Contains("embeddings.json"))
+{
+    // Not a database problem: the vectors Part 3B ships with aren't in this build.
+    Console.WriteLine("   ❌ The vectors Part 3B ships with aren't in this build.");
+    Console.WriteLine();
+    Console.WriteLine($"   {ex.Message}");
+    Console.WriteLine();
+    return 1;
 }
 catch (Exception ex)
 {

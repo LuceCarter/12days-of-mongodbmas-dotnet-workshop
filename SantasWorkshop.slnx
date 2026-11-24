@@ -23,6 +23,13 @@
   <Folder Name="/part3a-search/Tests/">
     <Project Path="part3a-search/Tests/Part3A.Tests.csproj" />
   </Folder>
+  <Folder Name="/part3b-vector-search/" />
+  <Folder Name="/part3b-vector-search/Starter/">
+    <Project Path="part3b-vector-search/Starter/Part3B.Starter.csproj" />
+  </Folder>
+  <Folder Name="/part3b-vector-search/Tests/">
+    <Project Path="part3b-vector-search/Tests/Part3B.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Content/">
     <Project Path="src/Content/SantasWorkshop.Content.csproj" />
@@ -34,6 +41,9 @@
     <Project Path="src/Shared/SantasWorkshop.Shared.csproj" />
   </Folder>
   <Folder Name="/tools/" />
+  <Folder Name="/tools/embed/">
+    <Project Path="tools/embed/SantasWorkshop.Embed.csproj" />
+  </Folder>
   <Folder Name="/tools/seed/">
     <Project Path="tools/seed/SantasWorkshop.Seed.csproj" />
   </Folder>

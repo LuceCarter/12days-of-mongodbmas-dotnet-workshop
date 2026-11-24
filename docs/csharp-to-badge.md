@@ -212,7 +212,58 @@ A dynamic index can't give you `token`, `autocomplete` or a chosen analyzer: tha
 
 ## Part 3B — Vector Search
 
-*Added when Part 3B ships.*
+A vector index definition is JSON, and so is a `$vectorSearch` stage. The driver's `VectorSearch(...)`
+prints exactly the stage you'd type in the shell, so `Console.WriteLine(query)` shows you the shell
+version of anything you wrote in C#.
+
+| What you want | Shell / Atlas | C# |
+|---|---|---|
+| Create a vector index | `db.toys.createSearchIndex("n", "vectorSearch", { fields: [ ... ] })` | `SearchIndexes.CreateOneAsync(new CreateSearchIndexModel("n", SearchIndexType.VectorSearch, definition))` |
+| A vector field | `{ type: "vector", path, numDimensions: 1024, similarity: "cosine" }` | the same, as a `BsonDocument` |
+| A filter field | `{ type: "filter", path: "minAge" }` | the same |
+| Find the nearest | `{ $vectorSearch: { index, path, queryVector, numCandidates, limit } }` | `.VectorSearch(t => t.Field, new QueryVector(v), limit, new VectorSearchOptions<T> { IndexName, NumberOfCandidates })` |
+| Narrow it first (pre-filter) | `filter: { minAge: { $lte: 5 } }` | `VectorSearchOptions<T> { Filter = ... }` |
+| Exact (ENN), not approximate | `exact: true`, with no `numCandidates` | `VectorSearchOptions<T> { Exact = true }` |
+| Read the score | `{ $meta: "vectorSearchScore" }` | the same, in a `Project` |
+| Get a vector for some text | `POST https://api.voyageai.com/v1/embeddings` | `HttpClient` |
+
+### Watch out: `numDimensions` is not checked when you create the index
+
+Declare the wrong number and the index builds, reports **READY**, and is `queryable`. Query it with a vector of
+the real length and you get `vector field is indexed with N dimensions but queried with M`: read it. "Fix" the
+query to match the index and you get **no error and no results**, because every stored vector was the wrong
+length for the index and was skipped. The number must equal what the embedding model produces. It can't be
+edited: drop the index and create it again.
+
+### Watch out: the same model, the same length
+
+The question must be embedded by **the same model** as the stored vectors, with the same number of
+dimensions. Atlas never makes a vector: your code asks the embedding model, then hands the vector to Atlas.
+Voyage's `input_type` is `"document"` for text you store and `"query"` for a question.
+
+### Rules the server enforces
+
+| Rule | If you break it |
+|---|---|
+| `queryVector` length = `numDimensions` | error naming both numbers |
+| `numCandidates` ≥ `limit`, and ≤ 10,000 | error |
+| `numCandidates` is required unless `exact: true` | error |
+| A `filter` field must be declared `filter` in the index | `Path 'x' needs to be indexed as filter` |
+| A wrong index name | **no results, no error** |
+| `$vectorSearch` must be the first stage | error |
+
+### Similarity: what the score means
+
+Atlas rescales every similarity to a 0 to 1 score, higher is closer: cosine `(1 + cos) / 2`, euclidean
+`1 / (1 + distance²)`, dotProduct `(1 + dot) / 2`. A cosine score of 0.5 means *at right angles*.
+Cosine ignores a vector's length; dot product and Euclidean don't.
+
+### Pre-filter or post-filter?
+
+A `filter` inside `$vectorSearch` narrows **before** the search, so you still get `limit` results, and it
+doesn't change any score. A `$match` after it narrows what's already been chosen, so you can end up with
+fewer than `limit`. Pre-filtered queries are typically slower than unfiltered ones (MongoDB's docs say so),
+and a filter that is too restrictive is a problem of its own.
 
 ## Part 4 — RAG and agents
 

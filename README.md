@@ -79,13 +79,14 @@ dotnet run --project tools/doctor
 docker-compose.yml       MongoDB with Search and Vector Search, for local work
 tools/doctor/            Environment check — run this first, and whenever things break
 tools/seed/              Loads practice data into the database, for exploring in Compass and the shell
+tools/embed/             Generates the Part 3B vectors with a Voyage key (maintainers only: they are already committed)
 tools/site-routes/       Lists every URL the landing page serves (used by the deploy)
 src/Shared/              The models (Toy, Order, LedgerEntry), seed data and connection helpers
 src/Content/             Renders this repo's markdown for the landing page (and its tests)
 part1-inventory/         Part 1: README, Starter/, Tests/, SOLUTIONS.md
 part2-ledger/            Part 2: README, Starter/, Tests/, SOLUTIONS.md
 part3a-search/           Part 3A: README, Starter/, Tests/, SOLUTIONS.md
-part3b-vector-search/
+part3b-vector-search/    Part 3B: README, Starter/, Tests/, SOLUTIONS.md
 part4-elf-assistant/
 LandingPage/             The challenge's front door (Blazor WebAssembly)
 docs/

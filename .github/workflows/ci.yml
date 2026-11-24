@@ -44,6 +44,7 @@ jobs:
           - { id: "1", folder: part1-inventory }
           - { id: "2", folder: part2-ledger }
           - { id: "3A", folder: part3a-search }
+          - { id: "3B", folder: part3b-vector-search }
 
     services:
       mongodb:
