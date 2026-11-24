@@ -26,7 +26,19 @@ if (builder.HostEnvironment.IsDevelopment())
     {
         var overrides = await http.GetFromJsonAsync(
             "appsettings.Development.json", ChallengeConfigContext.Default.DevelopmentOverrides);
+        var before = config;
         config = config.With(overrides);
+
+        // A local preview must never be mistaken for the live site, so say so out loud.
+        var previewing = config.Parts.Where(p => p.Available && !before.Parts.First(b => b.Id == p.Id).Available).ToList();
+        if (previewing.Count > 0)
+            Console.WriteLine($"[local preview] Releasing parts {string.Join(", ", previewing.Select(p => p.Id))} " +
+                              "on this machine only (appsettings.Development.json). The committed config is unchanged.");
+
+        var unknown = before.UnknownPartIds(overrides?.ReleaseParts);
+        if (unknown.Count > 0)
+            Console.WriteLine($"[local preview] ReleaseParts names no such part: {string.Join(", ", unknown)}. " +
+                              $"Known ids: {string.Join(", ", before.Parts.Select(p => p.Id))}.");
     }
     catch (HttpRequestException)
     {

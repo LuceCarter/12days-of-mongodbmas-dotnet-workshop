@@ -99,6 +99,13 @@ else
             rendered = Renderer.Render(markdown, current.SourcePath);
             scrollPending = true;
         }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Not a network problem: the file isn't there. In practice that means a part that is
+            // marked released locally (ReleaseParts) before its README has been written — the
+            // tests stop a *real* release getting this far.
+            error = $"There's no file at {current.SourcePath} yet. If you're writing this part, create it and reload.";
+        }
         catch (HttpRequestException)
         {
             error = "The file didn't download. Check your connection and refresh.";

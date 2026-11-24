@@ -57,7 +57,10 @@
                         }
                         @foreach (var badge in part.Badges)
                         {
-                            <BadgeLink Badge="badge" />
+                            @* One badge: the button just says what it does. Two (Part 4): "Earn a skill
+                               badge" twice would be indistinguishable, so name each. *@
+                            <BadgeLink Badge="badge"
+                                       Text="@(part.Badges.Count > 1 ? $"Earn a skill badge: {badge.Name}" : "Earn a skill badge")" />
                         }
                     </div>
                 </article>

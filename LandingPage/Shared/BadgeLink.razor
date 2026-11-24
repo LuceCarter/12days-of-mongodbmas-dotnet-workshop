@@ -2,21 +2,39 @@
     One badge. Renders a real link once the URL is filled in, and an honest
     "coming soon" chip while it is still a placeholder in appsettings.json —
     a dead link on a launch page is worse than no link.
+
+    By default the text is the badge's name. A caller can pass its own Text (the challenge
+    cards say "Earn a skill badge"); the real name then stays available as the tooltip and as
+    the accessible name, so nobody is left guessing which badge a button leads to.
 *@
 
 @if (Badge.IsPlaceholder)
 {
-    <span class="tag tag--badge" title="The badge link will be added here before this part is released.">
-        🏅 @Badge.Name — link coming soon
+    <span class="tag tag--badge" title="@Tooltip">
+        🏅 @Label — link coming soon
     </span>
 }
 else
 {
-    <a class="tag tag--badge" href="@Badge.Url" target="_blank" rel="noopener">
-        🏅 @Badge.Name ↗
+    <a class="tag tag--badge" href="@Badge.Url" target="_blank" rel="noopener"
+       title="@Badge.Name" aria-label="@AccessibleName">
+        🏅 @Label ↗
     </a>
 }
 
 @code {
     [Parameter, EditorRequired] public Badge Badge { get; set; } = default!;
+
+    /// <summary>What the button says. Defaults to the badge's name.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    private string Label => Text ?? Badge.Name;
+
+    // Without this, a screen reader would read "Earn a skill badge" and have no idea which one —
+    // and two such links on one card would be indistinguishable.
+    private string? AccessibleName => Text is null ? null : $"Earn a skill badge: {Badge.Name}";
+
+    private string Tooltip => Text is null
+        ? "The badge link will be added here before this part is released."
+        : $"{Badge.Name} — the badge link will be added here before this part is released.";
 }

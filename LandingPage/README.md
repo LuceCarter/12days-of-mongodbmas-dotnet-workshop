@@ -40,17 +40,25 @@ that, `/parts/{id}` shows a "releases on …" card), and no code changes.
 
 ### Previewing a README edit
 
-The site shows a **copy** of each markdown file, made at build time. So after editing a README,
-a plain `dotnet run` keeps showing the old text until you restart it. To preview edits as you
-write, run:
+The site shows a **copy** of each markdown file, made at build time. So a plain `dotnet run` keeps
+showing the old text after you edit a README. To preview edits as you write, run:
 
 ```bash
 dotnet watch --project LandingPage --no-hot-reload
 ```
 
-That rebuilds and restarts whenever a README or doc changes (about five seconds). The
-`--no-hot-reload` matters: without it `dotnet watch` notices the change but decides there is
-"no managed code change to apply" and does nothing.
+- **Editing a file that already exists** rebuilds and refreshes in about five seconds. The
+  `--no-hot-reload` matters: without it `dotnet watch` notices the change, decides there is "no
+  managed code change to apply", and does nothing.
+- **Creating a new file** (the first `README.md` of a part, say) is **not** picked up. `dotnet watch`
+  only watches directories that already hold a watched file, so a new file in an empty folder is
+  invisible to it. **Stop it and start it again.** (A `.gitkeep` to anchor the folder and the polling
+  watcher were both tried; neither helped.)
+
+### Previewing a part before it's released
+
+To see a part's pages without releasing it, use the local override below. **Don't** flip
+`"Available"` in `appsettings.json` for this: that file is committed, and pushing it *is* the release.
 
 ### Writing content
 
@@ -102,24 +110,30 @@ things that aren't obvious:
 
 One-time repo setup: **Settings → Pages → Source → GitHub Actions**.
 
-## Testing the GitHub links locally
+## Local-only settings
 
-The links on the page are built from `Repo` in `appsettings.json`, which points at the
-published repository. Before that repo exists — or if you're working on a fork — those
-links will 404.
-
-To fix that for a local run only:
+`wwwroot/appsettings.Development.json` holds settings for **your machine only**. It is git-ignored, and
+loaded only under `dotnet run` (never on the live site), so nothing in it can reach `main`.
 
 ```bash
 cp LandingPage/wwwroot/appsettings.Development.json.example \
    LandingPage/wwwroot/appsettings.Development.json
 ```
 
-Then put your own URL in it. `appsettings.Development.json` is git-ignored, is loaded
-only when `ASPNETCORE_ENVIRONMENT=Development` (which `dotnet run` sets), and can
-override exactly two keys: `Repo` and `BadgeHub`. Everything else —
-the parts, the badges, the resources — stays in `appsettings.json`, so there's only
+Everything in it is optional, and it can override exactly these:
+
+| Key | What it does |
+|---|---|
+| `ReleaseParts` | Treat these parts as released, locally: `["2", "3A"]`, or `["*"]` for all. Ids aren't case-sensitive. The parts' **Start** buttons, README and Solutions pages appear and the "Releases …" tags go. |
+| `Repo` | Point the GitHub links at a repo that exists (a fork, before the real one is published). |
+| `BadgeHub` | The badge hub link. |
+
+Everything else — the parts, the badges, the resources — stays in `appsettings.json`, so there's only
 ever one copy of the real content.
 
-Badge links aren't affected: they're still placeholders, so they render as
-"link coming soon" chips rather than broken links.
+`ReleaseParts` logs `[local preview] Releasing parts …` to the browser console so a preview can't be
+mistaken for the live site, and names any id that matches no part (a typo). A released part with no
+`README.md` yet shows *"There's no file at part2-ledger/README.md yet"*. The content tests read the
+committed `appsettings.json`, so a local override never changes what they check.
+
+Badge links aren't affected: they're still placeholders, so they render as "link coming soon" chips.

@@ -1,7 +1,12 @@
 {
-  "//": "Copy this to appsettings.Development.json to test the GitHub links locally.",
-  "//2": "That filename is git-ignored, so your local value never reaches the repo.",
-  "//3": "Only `Repo` and `BadgeHub` can be overridden. Badge links stay as they are in appsettings.json.",
+  "//": "Copy this to appsettings.Development.json for settings that apply to YOUR machine only.",
+  "//2": "That filename is git-ignored and only loaded under `dotnet run`, so nothing here can reach main or the live site.",
+  "//3": "Everything is optional. Delete the lines you don't need.",
 
-  "Repo": "https://github.com/your-username/your-fork"
+  "//repo": "Point the GitHub links at a repo that exists (a fork, say).",
+  "Repo": "https://github.com/your-username/your-fork",
+
+  "//release": "Preview parts as if they were released: [\"2\", \"3A\"] for some, [\"*\"] for all. Ids are not case-sensitive.",
+  "//release2": "Releasing a part for real is \"Available\": true in appsettings.json, which is a push away from live. This is the safe way to look first.",
+  "ReleaseParts": ["*"]
 }

@@ -29,9 +29,10 @@ public sealed class ChallengeConfig
     public string ReadmeUrl(Part part) => $"{Repo}/blob/main/{part.Folder}/README.md";
 
     /// <summary>
-    /// Applies a local <c>appsettings.Development.json</c>, if there is one.
-    /// Only the three repo-level links can be overridden — enough to point a local
-    /// run at a repo that actually exists, without duplicating the whole file.
+    /// Applies a local <c>appsettings.Development.json</c>, if there is one. It can point a
+    /// local run at a repo that actually exists (<c>Repo</c>, <c>BadgeHub</c>) and release
+    /// parts for preview (<c>ReleaseParts</c>), without duplicating the whole file — and,
+    /// because that file is git-ignored, without any risk of it reaching <c>main</c>.
     /// </summary>
     public ChallengeConfig With(DevelopmentOverrides? overrides)
     {
@@ -41,11 +42,25 @@ public sealed class ChallengeConfig
         {
             Repo = overrides.Repo ?? Repo,
             BadgeHub = overrides.BadgeHub ?? BadgeHub,
-            Parts = Parts,
+            Parts = ReleasedForPreview(overrides.ReleaseParts),
             LevelUpBadges = LevelUpBadges,
             Resources = Resources,
         };
     }
+
+    /// <summary>Ids from <paramref name="requested"/> that match no part (a typo, usually).</summary>
+    public IReadOnlyList<string> UnknownPartIds(IEnumerable<string>? requested) =>
+        (requested ?? []).Where(id => id != "*" && !Parts.Any(p => Matches(p, id))).ToList();
+
+    private IReadOnlyList<Part> ReleasedForPreview(IEnumerable<string>? requested)
+    {
+        var ids = requested?.ToList();
+        if (ids is null or { Count: 0 }) return Parts;
+
+        return Parts.Select(p => ids.Any(id => id == "*" || Matches(p, id)) ? p.WithAvailable(true) : p).ToList();
+    }
+
+    private static bool Matches(Part part, string id) => part.Id.Equals(id, StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -56,6 +71,13 @@ public sealed class DevelopmentOverrides
 {
     public string? Repo { get; init; }
     public string? BadgeHub { get; init; }
+
+    /// <summary>
+    /// Part ids to treat as released on this machine only: <c>["2", "3A"]</c>, or <c>["*"]</c> for
+    /// all of them. Lets you preview a part you are still writing without editing the committed
+    /// <c>"Available"</c> flag — which, once pushed, is the release.
+    /// </summary>
+    public string[]? ReleaseParts { get; init; }
 }
 
 public sealed class Part
@@ -71,6 +93,12 @@ public sealed class Part
     public IReadOnlyList<Badge> Badges { get; init; } = [];
 
     public string Heading => $"Part {Id} — {Title}";
+
+    public Part WithAvailable(bool available) => new()
+    {
+        Id = Id, Title = Title, Released = Released, Level = Level, Available = available,
+        Summary = Summary, Teaches = Teaches, Folder = Folder, Badges = Badges,
+    };
 }
 
 public sealed class Badge
