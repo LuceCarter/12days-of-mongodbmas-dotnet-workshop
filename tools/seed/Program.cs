@@ -9,8 +9,8 @@ using SantasWorkshop.Shared;
 // Safe to run as often as you like: it empties and refills `toys`, `orders` and `ledger`,
 // which puts everything back as it started. It touches nothing else.
 //
-// The tests don't need this. Part 1's tests reseed `toys` themselves, and Part 2's tests use
-// a separate database (`santas_workshop_part2_tests`) so they never overwrite what you are
+// The tests don't need this. Part 1's tests reseed `toys` themselves, and the tests for Parts 2 and 3A use
+// separate databases (`santas_workshop_part2_tests`, `santas_workshop_part3a_tests`) so they never overwrite what you are
 // exploring. This is for YOU, not for them.
 
 Console.WriteLine();

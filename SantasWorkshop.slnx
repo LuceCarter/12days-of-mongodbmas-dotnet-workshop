@@ -16,6 +16,13 @@
   <Folder Name="/part2-ledger/Tests/">
     <Project Path="part2-ledger/Tests/Part2.Tests.csproj" />
   </Folder>
+  <Folder Name="/part3a-search/" />
+  <Folder Name="/part3a-search/Starter/">
+    <Project Path="part3a-search/Starter/Part3A.Starter.csproj" />
+  </Folder>
+  <Folder Name="/part3a-search/Tests/">
+    <Project Path="part3a-search/Tests/Part3A.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Content/">
     <Project Path="src/Content/SantasWorkshop.Content.csproj" />

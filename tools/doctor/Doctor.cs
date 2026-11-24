@@ -260,7 +260,7 @@ public static class Doctor
                     "the practice database is empty — fine for now, the tests seed what they need",
                     """
                     Nothing to do to run the tests: Part 1's tests load the toys themselves, and
-                    Part 2's use a separate database.
+                    Parts 2 and 3A use separate databases.
                     To have something to look at in Compass or the shell, load the practice data:
                         dotnet run --project tools/seed
                     """);

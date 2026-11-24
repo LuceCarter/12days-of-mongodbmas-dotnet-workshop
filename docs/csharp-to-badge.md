@@ -159,7 +159,56 @@ too. Compare it with what you'd type in the shell.
 
 ## Part 3A — Search
 
-*Added when Part 3A ships.*
+An Atlas Search *index definition* is JSON, and a `$search` stage is JSON. The driver's typed builders
+(`Builders<Toy>.Search`) print exactly the JSON you'd type in the shell, so `Console.WriteLine(query)`
+shows you the shell version of any query you wrote in C#.
+
+| What you want | Shell / Atlas | C# |
+|---|---|---|
+| Create a dynamic index | `db.toys.createSearchIndex("n", { mappings: { dynamic: true } })` | `await toys.SearchIndexes.CreateOneAsync(new CreateSearchIndexModel("n", definition))` |
+| Create a static index | `{ mappings: { dynamic: false, fields: { ... } } }` | the same JSON in `BsonDocument.Parse(...)` |
+| List indexes, check `queryable` | `db.toys.getSearchIndexes("n")` | `await toys.SearchIndexes.ListAsync("n")` |
+| Drop or update an index | `dropSearchIndex("n")`, `updateSearchIndex("n", def)` | `SearchIndexes.DropOneAsync`, `UpdateAsync` |
+| Words in a field | `{ $search: { index, text: { query, path } } }` | `.Search(Builders<Toy>.Search.Text(t => t.Description, q), indexName: "n")` |
+| Several fields | `path: ["name", "description"]` | `Search.Text(new[] { "name", "description" }, q)` |
+| Exact value | `equals: { path, value }` | `Search.Equals(t => t.Category, "puzzle")` |
+| Range | `range: { path, gte, lte }` | `Search.Range(t => t.MinAge, SearchRangeBuilder.Lte(6))` |
+| Combine clauses | `compound: { must, should, filter, mustNot }` | `Search.Compound().Must(...).Filter(...)` |
+| Boost one clause | `score: { boost: { value: 5 } }` | `new SearchTextOptions<Toy> { Score = new SearchScoreDefinitionBuilder<Toy>().Boost(5) }` |
+| Tolerate typos | `fuzzy: { maxEdits: 2 }` | `new SearchTextOptions<Toy> { Fuzzy = new SearchFuzzyOptions { MaxEdits = 2 } }` |
+| As you type | `autocomplete: { query, path }` | `Search.Autocomplete(t => t.Name, prefix)` |
+| Read the score | `{ $meta: "searchScore" }` | the same, in a `Project("{ score: { $meta: 'searchScore' } }")` |
+| Counts and facets, no documents | `{ $searchMeta: { count / facet } }` | `.SearchMeta(...)` |
+
+### Watch out: a new search index isn't ready when `CreateOneAsync` returns
+
+Create, then **wait for `queryable`**, then query. Queried too early, `$search` returns an empty result
+and no error. Locally it takes a fraction of a second; on an Atlas free cluster about a minute.
+
+### Watch out: no `index` means an index called `default`
+
+`$search` without `index: "name"` looks for one named `default`. Name yours anything else and forget,
+and you get an empty result and no error.
+
+### Watch out: `number` does not index Decimal128
+
+Atlas Search's `number` type is `int32`, `int64` and `double`. A **Decimal128** field (our `price`)
+can be mapped as `number` without complaint, and then **nothing in it is searchable**. A `range`
+query given a `decimal` fails with `Type is not supported: DECIMAL128`; cast it to a `double` and the
+query runs and returns **nothing**. Filter that field in a `$match` *after* the `$search`, or store a
+searchable copy as an `int` or `double`.
+
+### Which type for which operator
+
+| Operator | Needs the field mapped as |
+|---|---|
+| `text`, `phrase` | `string` (with an analyzer if you want stemming) |
+| `autocomplete` | `autocomplete` |
+| `equals` | `token`, `boolean`, or a number |
+| `range` | `number` or `date` |
+| facets | `token` or `stringFacet` |
+
+A dynamic index can't give you `token`, `autocomplete` or a chosen analyzer: that is when to go static.
 
 ## Part 3B — Vector Search
 

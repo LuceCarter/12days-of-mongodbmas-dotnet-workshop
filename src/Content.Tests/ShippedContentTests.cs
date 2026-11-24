@@ -123,8 +123,9 @@ public sealed class ShippedContentTests
     public void Rendering_keeps_every_code_block(string route)
     {
         var source = RepoFiles.Read(Page(route).SourcePath);
-        // A fence can open straight after a list marker ("6. ```bash"), so allow for one.
-        var expected = Regex.Matches(source, @"^\s*(?:\d+[.)]\s+|[-*+]\s+)?```", RegexOptions.Multiline).Count / 2;
+        // A fence can open straight after a list marker ("6. ```bash") or sit inside a blockquote
+        // ("> ```js"), so allow for either.
+        var expected = Regex.Matches(source, @"^\s*(?:>\s*)*(?:\d+[.)]\s+|[-*+]\s+)?```", RegexOptions.Multiline).Count / 2;
         var actual = Regex.Matches(Rendered[route].Html, "<pre><code").Count;
 
         Assert.Equal(expected, actual);
@@ -160,6 +161,35 @@ public sealed class ShippedContentTests
     public void Part_2_solutions_has_all_nine_solutions()
     {
         Assert.Equal(9, Regex.Matches(Rendered["parts/2/solutions"].Html, @"<summary><b>Step (\d+) —").Count);
+    }
+
+    [Fact]
+    public void Part_3A_has_all_ten_steps_in_its_table_of_contents_and_all_ten_solutions()
+    {
+        var steps = Rendered["parts/3A"].Toc
+            .Where(t => t.Level == 3)
+            .Select(t => Regex.Match(t.Text, @"^Step (\d+) —"))
+            .Where(m => m.Success)
+            .Select(m => int.Parse(m.Groups[1].Value))
+            .ToList();
+
+        Assert.Equal(Enumerable.Range(1, 10), steps);
+        Assert.Equal(10, Regex.Matches(Rendered["parts/3A/solutions"].Html, @"<summary><b>Step (\d+) —").Count);
+    }
+
+    [Fact]
+    public void Part_3A_teaches_the_decimal128_trap_where_a_reader_cannot_miss_it()
+    {
+        // The trap is the thing most likely to cost a learner an afternoon, so it must stay prominent:
+        // a warning before the story ends, its own section, and the step where it bites.
+        var readme = RepoFiles.Read("part3a-search/README.md");
+        var firstScreen = readme[..readme.IndexOf("## The story", StringComparison.Ordinal)];
+
+        Assert.Contains("Decimal128", firstScreen);
+        Assert.Contains("## The trap: Atlas Search can't see Decimal128", readme);
+        Assert.Contains("### Step 6 — Fix the elf's price filter", readme);
+        Assert.Contains("Decimal128", readme[readme.IndexOf("### Step 5", StringComparison.Ordinal)..readme.IndexOf("### Step 6", StringComparison.Ordinal)]);
+        Assert.Contains("Decimal128", readme[readme.IndexOf("## Badge checklist", StringComparison.Ordinal)..readme.IndexOf("## 📋 From C# to the badge", StringComparison.Ordinal)]);
     }
 
     [Fact]

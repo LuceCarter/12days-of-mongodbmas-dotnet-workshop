@@ -125,19 +125,67 @@ was written down.
 ---
 
 ## Part 3A — Finding the Perfect Gift: Search
-**Anchor badge:** Search Fundamentals · **Release:** Dec 9
+**Anchor badge:** Search Fundamentals · **Level:** Intermediate · **Release:** Dec 9
+
+**Status: ✅ complete.** 5/5 objectives covered, 28 tests, all red on the starter code and green
+on the published solutions. Verified 2026-11-24. Two things are 🖐️ rather than tested: the Atlas UI half of
+objective 4, and the *planning* half of objective 2 — see the notes below the table.
 
 | Objective | Step | Test | Status |
 |---|---|---|---|
-| Define Atlas Search, its use cases, and the basic steps | — | — | ⬜ |
-| Understand ranking; plan Search features before building | — | — | ⬜ |
-| Know when to use dynamic mappings | — | — | ⬜ |
-| Create indexes with static mappings, and mappings for multiple data types | — | — | ⬜ |
-| Create a Search query | — | — | ⬜ |
+| Define Atlas Search, its use cases, and the basic steps | Steps 1–2 · `CreateDynamicIndexAsync`, `SearchDescriptionsAsync` (and the "What is Atlas Search?" section) | `Step01_CreatesADynamicIndex`, `…_WaitsUntilTheIndexIsQueryable`, `Step02_FindsTheWordInDescriptions`, `…_ReturnsResultsBestFirstWithAScore`, `…_NoMatchIsEmpty` | ✅ |
+| Understand ranking; plan Search features before building | "Plan first" section, Step 8 · `RankedAsync` | `Step08_ANameMatchOutranksADescriptionMatch`, `…_FindsTheSameToysAsAPlainSearch`, `…_ScoresShowHowGoodTheMatchIs`; the plan is proven through Step 5's tests | ✅ 🖐️ |
+| Know when to use dynamic mappings | Steps 3–4 · `DescribeIndexAsync`, `FindInCategoryAsync` | `Step03_ADynamicIndexHasNoListedFields`, `…_AStaticIndexListsItsFields`, `Step04_EqualsWorksOnAStaticIndex`, `…_TheSameQueryFindsNothingOnADynamicIndex`, `…_UnknownCategoryIsEmpty` | ✅ |
+| Create indexes with static mappings, and mappings for multiple data types | Steps 5–6 · `CreateStaticIndexAsync`, `ToysUnderPriceAsync` | `Step05_CreatesAStaticIndex`, `…_MapsEachFieldWithTheRightType`, `…_TheIndexDoesWhatTheMappingPromises`, `Step06_FindsToysUnderThePriceDespiteTheTrap`, `…_ALargeLimitKeepsEveryMatchBestFirst`, `…_TheLimitReallyCuts` | ✅ 🖐️ |
+| Create a Search query | Steps 2, 7, 9, 10 · `SearchDescriptionsAsync`, `GiftIdeasAsync`, `FuzzySearchAsync`, `SuggestAsync` | `Step07_SpaceToysForASixYearOld`, `…_LeavesOutDiscontinuedToys`, `…_FiltersStockAndAge`, `Step09_ForgivesATypo`, `…_FindsAMisspeltName`, `…_StillFindsRealWordsAndStillRejectsNonsense`, `Step10_CompletesAHalfTypedWord`, `…_CompletesAnyWordInTheName`, `…_HonoursTheLimitAndIgnoresCase` | ✅ |
 
-> Index creation is shown **both** in the C# driver and in the Atlas UI, because the
-> assessment may use the UI. The UI half is 🖐️.
-> Remember the ~20s index build delay — fixtures must poll for `queryable`.
+> **The Atlas UI half of objective 4** is 🖐️: xUnit can't prove a learner clicked through Atlas. Index creation
+> in the **driver** is tested (Step 5 builds the index and the tests query it). The UI half is covered by
+> click-by-click instructions in Step 5 (Atlas: **Search & Vector Search** → **Create Search Index** → Visual or
+> JSON Editor → **Next** → **Create Search Index**; Compass: **Indexes** → **Search Indexes** → **Create
+> Index**) and a self-tick row on the README's badge checklist. Those labels come from the current MongoDB
+> documentation. They have **not** been clicked through by a person on this machine — worth doing once
+> before release, and the Compass route against *Atlas Local* in particular.
+>
+> **The planning half of objective 2** is taught by the "Plan first" table and **proven only
+> indirectly**: Step 5's tests check that the index has every field and type the plan names. A test
+> can't judge whether a learner *thought* first.
+>
+> **The Decimal128 trap** is not a badge objective, but it is the thing most likely to cost a learner an
+> afternoon, so it is taught in five places (the top-of-page warning, a dedicated section, Step 5, Step 6,
+> and a checklist row) and **guarded by a test**: Step 6's first test asserts the trap still exists on this
+> server (a `decimal` in a range query throws, a `double` finds nothing) *before* it tests the learner's
+> code, so a server that learns to index Decimal128 turns it red instead of letting the README go stale.
+
+**Seed data check** — verified 2026-11-24 against `toys.json` (the same 34 toys as Part 1; nothing was
+added for this part). The facts the steps rely on:
+
+| Fact the steps rely on | Value |
+|---|---|
+| Toys whose **description** has the word "dinosaur" | 1 on a dynamic index (the singular), **2** with the English analyzer (the Brachiosaurus game says "dinosaurs") |
+| Toys tagged `dinosaur` | 8: six have it *only* as a tag |
+| Puzzles by `equals` on `category` (Step 4) | 3 on the static index, **0** on the dynamic one |
+| Toys mentioning "space" | 7; 2 of them cost £15 or less (Step 6) |
+| Gift ideas for "space", age 6 (Step 7) | 4 of the 7 (others: wrong age, discontinued or out of stock) |
+| Magnetic Fishing Game | in stock **and** discontinued **and** suits a five-year-old: the toy that proves `mustNot` matters |
+| "wooden", unboosted vs name ×5 (Step 8) | Skipping Rope, Wooden Handles is **5th**, then **2nd** |
+| "family" (Step 8) | six toys tie on exactly the same score |
+| Autocomplete "wo" (Step 10) | 4 names, one of them on the *last* word ("Workshop") |
+
+Measured while writing this part, and relied on by the README:
+
+| Behaviour | Result |
+|---|---|
+| `range` on `price` (Decimal128), query value a C# `decimal` | server error: `"range.lte" Type is not supported: DECIMAL128` |
+| …query value cast to `double` | no error, **no results** — the stored values are not in the index |
+| `range` on a field that really is a `double` | works |
+| `equals` on a string field under a **dynamic** index | no error, no results |
+| `equals` on a `token` field | works; the same `token` field also supports `$searchMeta` facets |
+| Time for a new search index to become `queryable`, 34 documents, Atlas Local 8.0.15 | ~0.1–0.3 s; the first query after `queryable` saw all 34 documents in 12 of 12 trials |
+
+### Stretch — none
+
+The brief lists no stretch badge for Part 3A.
 
 ---
 

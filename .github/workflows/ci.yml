@@ -43,6 +43,7 @@ jobs:
         part:
           - { id: "1", folder: part1-inventory }
           - { id: "2", folder: part2-ledger }
+          - { id: "3A", folder: part3a-search }
 
     services:
       mongodb:

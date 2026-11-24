@@ -218,4 +218,86 @@ public sealed class SeedDataContractTests
         var sortFirst = positives.OrderByDescending(d => d.Points).Take(5).Select(d => d.Points).ToList();
         Assert.NotEqual(sortFirst, limitFirst);
     }
+
+    // ---- Part 3A: the catalogue, searched ---------------------------------------------------
+
+    private sealed record Toy(string Name, string Description, string Category, List<string> Tags, int MinAge, int MaxAge,
+                              bool InStock, bool Discontinued, decimal Price);
+
+    private static readonly List<Toy> Toys = JsonDocument.Parse(RepoFiles.Read("src/Shared/SeedData/toys.json"))
+        .RootElement.EnumerateArray()
+        .Select(t => new Toy(
+            t.GetProperty("name").GetString()!, t.GetProperty("description").GetString()!, t.GetProperty("category").GetString()!,
+            t.GetProperty("tags").EnumerateArray().Select(x => x.GetString()!).ToList(),
+            t.GetProperty("minAge").GetInt32(), t.GetProperty("maxAge").GetInt32(),
+            t.GetProperty("inStock").GetBoolean(), t.GetProperty("discontinued").GetBoolean(), t.GetProperty("price").GetDecimal()))
+        .ToList();
+
+    private static bool HasWord(string text, string word) =>
+        System.Text.RegularExpressions.Regex.IsMatch(text, $@"\b{System.Text.RegularExpressions.Regex.Escape(word)}\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    private static List<Toy> Mentioning(string word) =>
+        Toys.Where(t => HasWord(t.Name, word) || HasWord(t.Description, word) || t.Tags.Any(g => HasWord(g, word))).ToList();
+
+    [Fact]
+    public void Search_has_three_puzzles_for_equals_to_find_on_a_token_and_miss_on_a_dynamic_index()
+    {
+        Assert.Equal(3, Toys.Count(t => t.Category == "puzzle"));
+    }
+
+    [Fact]
+    public void Search_dinosaur_is_said_once_as_a_singular_and_once_as_a_plural_so_the_english_analyzer_matters()
+    {
+        var singular = Toys.Where(t => HasWord(t.Description, "dinosaur")).Select(t => t.Name).ToList();
+        var plural = Toys.Where(t => HasWord(t.Description, "dinosaurs")).Select(t => t.Name).ToList();
+
+        Assert.Equal(["Dinosaur Dig Kit"], singular);
+        Assert.Equal(["Brachiosaurus Balance Game"], plural);
+        Assert.Equal(8, Toys.Count(t => t.Tags.Contains("dinosaur")));
+    }
+
+    [Fact]
+    public void Search_seven_toys_mention_space_and_two_of_them_cost_fifteen_pounds_or_less()
+    {
+        Assert.Equal(7, Mentioning("space").Count);
+        Assert.Equal(["Glow Stars, Pack of 100", "Solar System Puzzle"], Mentioning("space").Where(t => t.Price <= 15m).Select(t => t.Name).Order().ToList());
+    }
+
+    [Fact]
+    public void Search_four_space_toys_suit_a_six_year_old_who_can_have_one_now()
+    {
+        var gifts = Mentioning("space").Where(t => t.InStock && !t.Discontinued && t.MinAge <= 6 && 6 <= t.MaxAge).ToList();
+        Assert.Equal(4, gifts.Count);
+    }
+
+    [Fact]
+    public void Search_one_toy_is_in_stock_and_discontinued_and_suits_a_five_year_old()
+    {
+        // The Step 7 trap: "in stock" alone isn't "available". Only mustNot(discontinued) removes this one.
+        var fishing = Toys.Single(t => t.Name == "Magnetic Fishing Game");
+        Assert.True(fishing.InStock && fishing.Discontinued && fishing.MinAge <= 5 && 5 <= fishing.MaxAge);
+        Assert.Contains("classic", fishing.Tags);
+    }
+
+    [Fact]
+    public void Search_the_word_wooden_is_in_the_name_of_exactly_two_toys_and_the_family_tag_is_on_six_that_tie()
+    {
+        Assert.Equal(["Skipping Rope, Wooden Handles", "Wooden Tool Bench"], Toys.Where(t => HasWord(t.Name, "wooden")).Select(t => t.Name).Order().ToList());
+
+        // Six toys have 'family' exactly once, in a tag and nowhere else: the same score, so a tie.
+        var family = Mentioning("family");
+        Assert.Equal(6, family.Count);
+        Assert.All(family, t => Assert.True(t.Tags.Contains("family") && !HasWord(t.Name, "family") && !HasWord(t.Description, "family")));
+    }
+
+    [Fact]
+    public void Search_autocomplete_wo_completes_four_names_one_on_its_last_word()
+    {
+        var names = Toys.Where(t => t.Name.Split([' ', ',', ':'], StringSplitOptions.RemoveEmptyEntries)
+                                         .Any(w => w.StartsWith("wo", StringComparison.OrdinalIgnoreCase))).Select(t => t.Name).ToList();
+
+        Assert.Equal(4, names.Count);
+        Assert.Contains("Jigsaw: Santa's Workshop", names);
+    }
 }

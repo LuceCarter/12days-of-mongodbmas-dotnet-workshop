@@ -30,6 +30,11 @@ Atlas free tier remains the documented fallback everywhere, via `MONGODB_URI`.
 
 ### Search indexes take ~20 seconds to become queryable
 
+> **Corrected 2026-11-24.** The ~20 s was measured for a *vector* index (the doctor's `--deep` probe). A
+> plain Atlas Search index on the 34 toys is `queryable` in about **0.1–0.3 s** locally, and the first query
+> after that saw all 34 documents in 12 of 12 trials. The rule below still stands (the gap exists, and on an
+> Atlas free cluster it is about a minute), but "~20 seconds" is not what a learner will see for Part 3A.
+
 Measured locally. Creating a search index returns immediately, but querying it
 before `queryable: true` returns nothing — with no error. This is a trap for
 learners and for tests.
@@ -196,6 +201,13 @@ Things to confirm before the part that depends on them ships.
       *(Part 2, Step 8–9)*
 - [ ] **Time the Part 2 core path.** It must land in 30–60 minutes; nine steps of one pipeline each
       should, but that is an estimate, not a measurement. *(Part 2)*
+
+- [ ] **Someone clicks through the Part 3A index-creation steps in the Atlas UI and in Compass.** The labels
+      come from the current MongoDB docs. The Compass route hasn't been tried against Atlas Local, and the
+      Atlas route needs a cloud cluster. *(Part 3A, Step 5)*
+- [ ] **Part 3A on Atlas M0.** Only Atlas Local 8.0.15 was used. Check the index wait (documented as about a
+      minute) and that the Decimal128 behaviour is the same there. *(Part 3A)*
+- [ ] **Time the Part 3A core path.** Ten steps; "about an hour" is an estimate. *(Part 3A)*
 
 ---
 
@@ -807,3 +819,102 @@ than emptied, so an index created by Step 9 can't leak into the next test.
 
 Nobody has clicked through the Compass steps; the `explain` steps haven't run on Atlas M0; the core path is
 untimed. All three are in "Still unverified".
+
+## 2026-11-24 — Part 3A: Finding the Perfect Gift: Search
+
+Written and verified, **not released**: `"Available"` stays `false` in `appsettings.json`.
+
+### Scope, as agreed with Luce
+
+- **Reuse the 34 toys.** No new collection: the fields already cover `string`, `token`, `number` and
+  `boolean`. Nothing was added to the seed data.
+- **Fuzzy and autocomplete are core steps** (the README table promises them), so there are ten steps, not
+  the five-objective minimum.
+- **Learners write both the index definitions and the queries**, so a wrong mapping fails visibly and the
+  index objectives are *proven*, not read.
+
+### Steps, mapped to the five objectives
+
+| Steps | Objective |
+|---|---|
+| 1–2 create a dynamic index, first `$search` (+ the "What is Atlas Search?" section) | Define Atlas Search, its use cases, and the basic steps |
+| "Plan first" section, 8 (boost) | Understand ranking; plan Search features before building |
+| 3–4 describe an index; `equals` finds nothing on a dynamic index | Know when to use dynamic mappings |
+| 5–6 static mapping (string+autocomplete, English analyzer, token, number, boolean), price | Create indexes with static mappings, and mappings for multiple data types |
+| 2, 7, 9, 10 text, compound, fuzzy, autocomplete | Create a Search query |
+
+### The Decimal128 trap — found by running it, taught on purpose
+
+`price` is stored as Decimal128 (a Part 1 decision, kept). **Atlas Search's `number` type is `int32`,
+`int64` and `double`** (the field-type docs list exactly those three and don't mention Decimal128).
+Measured behaviour has **two layers**:
+
+1. A `range` query given a C# `decimal` throws `"range.lte" Type is not supported: DECIMAL128`.
+2. The same query with a `double` runs, returns **nothing**, and says nothing — because mapping `price` as
+   `number` is accepted, the index reports ready, and every Decimal128 value is silently left out.
+
+My first probe (in the shell, with plain numbers) only showed layer 2; layer 1 appeared when the C# test
+passed a `decimal`. Both are taught. The trap is deliberately **hard to miss**: a warning before the story
+ends, a dedicated section before the steps, a ⚠️ in the Step 5 plan and bullet, Step 6 as a fix-the-bug
+(the elf's pre-written method took the "cast it to double" road), a checklist row, a "Watch out" in
+`docs/csharp-to-badge.md`, and the failure message of Step 6's test. `ShippedContentTests` asserts the README
+keeps it prominent. The fix taught is `$search` then `$match` on the stored value; the alternative
+(a searchable `priceInPence` int) is in Level up and was run.
+
+**A guard against the docs going stale:** Step 6's first test asserts both layers still behave this way
+*before* it tests the learner's code, so a server that learns to index Decimal128 turns it red instead of
+letting the README quietly teach something false.
+
+### Test design
+
+- **Reference indexes, built once.** An assembly fixture creates `ref-dynamic` and `ref-static` on a
+  shared, read-only catalogue in its own database (`santas_workshop_part3a_tests`). Search tests only read,
+  so reseeding per test would be slow and buy nothing. Steps 1 and 5 (which *create* indexes) run the
+  learner's code against a **throwaway collection**, so they test the learner's index, not the fixture's.
+- **Steps 2 and 4–10 don't depend on earlier steps being finished**: they query the reference indexes.
+  `ToySearch` takes the index names as constructor parameters for that reason.
+- **Readiness is `queryable`, never a delay.** The pre-written `WaitUntilQueryableAsync` polls the
+  server. 12/12 trials saw the whole collection on the first query after `queryable`.
+- **Every "finds nothing" test has a positive twin**, because an empty list is also what a broken method
+  returns (CI requires the starter to fail every test; one test passed on the starter until I added it).
+- Boost is tested where it changes the *order*: "wooden" puts Skipping Rope, Wooden Handles 5th unboosted
+  and 2nd with name ×5. "space" would not do: it wins unboosted too.
+- 28 tests: all red on the Starter, all green on `SOLUTIONS.md` (applied by the same script CI uses), green
+  three runs in a row.
+
+### Found by running it
+
+- **Typed `Range(t => t.Price, …)` forces a `decimal`** (so layer 1). Reaching layer 2 in C# needs the
+  string-path overload, `Range("price", Lte((double)x))`; that's what the elf's method uses.
+- **`Search.Text` takes an options object for score/fuzzy**, not a bare `score:` argument
+  (`SearchTextOptions<T> { Score = …, Fuzzy = … }`); needs `using MongoDB.Driver.Search;`.
+- **Dynamic `string` fields don't support `equals`** (no error, no results); a `token` does, and the same
+  `token` field supports `$searchMeta` facets.
+- The English analyzer changes the answer: "dinosaur" finds one toy on the dynamic index and two on the
+  static one ("dinosaurs" is stemmed).
+- xUnit v3: `CollectionBehavior(DisableTestParallelization = true)` is now an error (obsolete);
+  `CollectionBehavior.CollectionPerAssembly` does the job. Assembly fixtures are `[assembly: AssemblyFixture(…)]`.
+- `ShippedContentTests.Rendering_keeps_every_code_block` didn't count fences inside blockquotes
+  (`> ```js`); the regex now does.
+
+### CI and content tests
+
+- CI: one new matrix row (`{ id: "3A", folder: part3a-search }`).
+- Content tests: ten steps and ten solutions, the trap is prominent, plus seed-data contract tests for every
+  fact the README leans on (3 puzzles; "dinosaur" singular once, plural once; 7 "space" toys, 2 under £15;
+  4 gift ideas; the in-stock-and-discontinued toy; six-way "family" tie; "wo" completes 4 names).
+
+### Not verified, and said so
+
+- **Nobody has clicked through the Atlas UI or Compass steps.** The labels come from the current MongoDB
+  docs (Atlas: **Search & Vector Search** → **Go to Atlas Search** → **Create Search Index** → **Visual /
+  JSON Editor** → **Next** → **Create Search Index**, status **Build in Progress** → **Active**; Compass:
+  **Indexes** → **Search Indexes** → **Create Index**). The Atlas-UI path is for a cloud cluster; the
+  Compass path hasn't been tried against **Atlas Local**.
+- **Nothing was run on Atlas M0**: the index wait there is documented as about a minute, but not measured
+  here, and the whole part was only run on Atlas Local 8.0.15.
+- The Decimal128 docs statement is an *absence*: the `number` page lists three types and doesn't name
+  Decimal128. The behaviour is measured, not documented.
+- The core path is **untimed**; "about an hour" is an estimate for ten steps.
+- Part 3A's badge URL is still `REPLACE_ME`, and its GitHub file links 404 until pushed.
+- Synonyms, highlighting and `$search` sort were not built: not assessed, and not run.

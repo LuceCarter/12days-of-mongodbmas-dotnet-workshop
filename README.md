@@ -84,7 +84,7 @@ src/Shared/              The models (Toy, Order, LedgerEntry), seed data and con
 src/Content/             Renders this repo's markdown for the landing page (and its tests)
 part1-inventory/         Part 1: README, Starter/, Tests/, SOLUTIONS.md
 part2-ledger/            Part 2: README, Starter/, Tests/, SOLUTIONS.md
-part3a-search/
+part3a-search/           Part 3A: README, Starter/, Tests/, SOLUTIONS.md
 part3b-vector-search/
 part4-elf-assistant/
 LandingPage/             The challenge's front door (Blazor WebAssembly)
