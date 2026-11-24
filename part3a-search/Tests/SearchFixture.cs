@@ -61,7 +61,12 @@ public sealed class SearchFixture : IAsyncLifetime
 
         try
         {
-            // Dropping the collection drops its search indexes too, so every run starts clean.
+            // Dropping a collection drops its search indexes too, so every run starts clean. That includes
+            // the scratch collections earlier runs left behind.
+            foreach (var leftover in await (await Database.ListCollectionNamesAsync()).ToListAsync())
+                if (leftover.StartsWith("scratch_", StringComparison.Ordinal))
+                    await Database.DropCollectionAsync(leftover);
+
             await Database.DropCollectionAsync("toys");
             Toys = Database.GetCollection<Toy>("toys");
             await Toys.InsertManyAsync(Catalogue);
@@ -93,10 +98,13 @@ public sealed class SearchFixture : IAsyncLifetime
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     /// <summary>Makes a throwaway copy of the catalogue for a test that creates indexes itself.</summary>
+    /// <remarks>
+    /// The collection name gets a unique suffix every time. Search indexes are torn down in the background
+    /// when a collection is dropped, so re-using a name straight away can collide with the old index.
+    /// </remarks>
     public async Task<IMongoCollection<Toy>> FreshScratchCollectionAsync(string name)
     {
-        await Database.DropCollectionAsync(name);
-        var scratch = Database.GetCollection<Toy>(name);
+        var scratch = Database.GetCollection<Toy>($"{name}_{Guid.NewGuid():N}");
         await scratch.InsertManyAsync(Catalogue);
         return scratch;
     }

@@ -107,7 +107,9 @@ def main() -> int:
         # Right to left, so that replacing one method doesn't move the next one.
         edits = []
         for name, code in list(remaining.items()):
-            if re.search(rf"\b{re.escape(name)}\s*\(", source):
+            # Match the DECLARATION, not any mention: a name can be called from another starter file
+            # (Part 3B's GiftFinder calls VoyageEmbedder.EmbedAsync).
+            if re.search(rf"^[ \t]*public\s+[^\n(]*?\b{re.escape(name)}\s*\(", source, re.M):
                 edits.append((method_span(source, name), code))
                 del remaining[name]
 
