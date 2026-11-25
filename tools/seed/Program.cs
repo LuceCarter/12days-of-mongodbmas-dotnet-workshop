@@ -6,8 +6,8 @@ using SantasWorkshop.Shared;
 //
 //     dotnet run --project tools/seed
 //
-// Safe to run as often as you like: it empties and refills `toys`, `orders` and `ledger`,
-// which puts everything back as it started. It touches nothing else.
+// Safe to run as often as you like: it empties and refills `toys`, `orders` and `ledger` (and `handbook_chunks` with
+// --handbook), which puts everything back as it started. It touches nothing else.
 //
 // The tests don't need this. Part 1's tests reseed `toys` themselves, and the tests for Parts 2 and 3A use
 // separate databases (`santas_workshop_part2_tests`, `santas_workshop_part3a_tests`) so they never overwrite what you are
@@ -16,6 +16,10 @@ using SantasWorkshop.Shared;
 // Part 3B explores vectors in Compass and the shell, so it asks for the toys WITH their embeddings:
 //     dotnet run --project tools/seed -- --embeddings
 var withEmbeddings = args.Contains("--embeddings", StringComparer.OrdinalIgnoreCase);
+
+// Part 4A explores the Elf Handbook's chunks (with their vectors) the same way:
+//     dotnet run --project tools/seed -- --handbook
+var withHandbook = args.Contains("--handbook", StringComparer.OrdinalIgnoreCase);
 
 Console.WriteLine();
 Console.WriteLine("🎄 Santa's Workshop — loading the practice data");
@@ -36,16 +40,22 @@ try
     Console.WriteLine($"   ✅ toys    {counts.Toys,3} documents{(withEmbeddings ? "  (each with a 1024-dimension vector, for Part 3B)" : "")}");
     Console.WriteLine($"   ✅ orders  {counts.Orders,3} documents");
     Console.WriteLine($"   ✅ ledger  {counts.Ledger,3} documents");
+
+    if (withHandbook)
+    {
+        var chunks = await SeedLoader.ResetHandbookAsync(MongoContext.GetDatabase(client));
+        Console.WriteLine($"   ✅ handbook_chunks {chunks,3} documents  (each with a 1024-dimension vector, for Part 4A)");
+    }
     Console.WriteLine();
     Console.WriteLine("   Connect Compass or mongosh with:");
     Console.WriteLine($"       {ConnectionStringForDisplay()}");
     Console.WriteLine();
     return 0;
 }
-catch (InvalidOperationException ex) when (withEmbeddings && ex.Message.Contains("embeddings.json"))
+catch (InvalidOperationException ex) when ((withEmbeddings || withHandbook) && (ex.Message.Contains("embeddings.json") || ex.Message.Contains("handbook-chunks.json")))
 {
-    // Not a database problem: the vectors Part 3B ships with aren't in this build.
-    Console.WriteLine("   ❌ The vectors Part 3B ships with aren't in this build.");
+    // Not a database problem: the vectors Parts 3B and 4A ship with aren't in this build.
+    Console.WriteLine("   ❌ The vectors Parts 3B and 4A ship with aren't in this build.");
     Console.WriteLine();
     Console.WriteLine($"   {ex.Message}");
     Console.WriteLine();

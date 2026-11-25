@@ -1,4 +1,8 @@
-// Generates the vectors Part 3B ships with: one per toy description, and one per example question.
+// Generates the vectors the series ships with, so learners never need a key.
+//
+//   dotnet run --project tools/embed                 Part 3B: one per toy description, and one per example question
+//   dotnet run --project tools/embed -- --handbook   Part 4A: the Elf Handbook cut into chunks, and its example questions
+//
 //
 //   export VOYAGE_API_KEY="..."            # never commit this
 //   dotnet run --project tools/embed
@@ -7,8 +11,10 @@
 // don't: the vectors it writes are committed to the repo, so Part 3B works with no key at all.
 //
 // What it writes, into src/Shared/SeedData/:
-//   toy-embeddings.json     every toy's description, embedded as a DOCUMENT
-//   query-embeddings.json   a handful of example questions, embedded as QUERIES
+//   toy-embeddings.json       every toy's description, embedded as a DOCUMENT
+//   query-embeddings.json     a handful of example questions, embedded as QUERIES
+//   handbook-chunks.json      (--handbook) every chunk of the Elf Handbook, embedded as a DOCUMENT
+//   handbook-questions.json   (--handbook) the example questions Part 4A asks, embedded as QUERIES
 //
 // It writes NOTHING unless every vector came back the right length and the right count, so a
 // half-finished run can't leave the repo with half the data.
@@ -43,8 +49,12 @@ string[] questions =
     "a present for someone who loves the outdoors",
 ];
 
+var handbookMode = Environment.GetCommandLineArgs().Contains("--handbook");
+
 Console.WriteLine();
-Console.WriteLine("🎄 Santa's Workshop — generating the Part 3B vectors");
+Console.WriteLine(handbookMode
+    ? "🎄 Santa's Workshop — generating the Part 4A vectors (the Elf Handbook)"
+    : "🎄 Santa's Workshop — generating the Part 3B vectors");
 Console.WriteLine();
 
 var apiKey = Environment.GetEnvironmentVariable("VOYAGE_API_KEY");
@@ -78,10 +88,13 @@ try
     Console.WriteLine($"   Key        : {Mask(apiKey)}");
     Console.WriteLine();
 
+    if (handbookMode)
+        return await RunHandbookAsync();
+
     var (toyVectors, toyTokens) = await EmbedAsync(toys.Select(t => t.Description).ToList(), "document");
     var (questionVectors, questionTokens) = await EmbedAsync(questions, "query");
 
-    // Normalisation is NOT something the Voyage docs state, so measure it rather than assume it.
+    // Voyage's FAQ says vectors come back normalised to length 1. Measure it rather than take it on trust.
     var norms = toyVectors.Concat(questionVectors).Select(Norm).ToList();
     Console.WriteLine($"   ✅ {toys.Count} toy descriptions (as documents)   {toyTokens} tokens");
     Console.WriteLine($"   ✅ {questions.Length} questions (as queries)           {questionTokens} tokens");
@@ -118,6 +131,100 @@ catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Part 4A. The chunking here is this tool's own reference version of what Part 4A asks the learner to write: words,
+// a window of ChunkWords, sliding forward by (ChunkWords - OverlapWords). The Part 4A tests check that the learner's
+// Chunker reproduces exactly these chunks, so the two cannot drift apart.
+async Task<int> RunHandbookAsync()
+{
+    const int ChunkWords = 80;
+    const int OverlapWords = 20;
+
+    string[] handbookQuestions =
+    [
+        "How do I know if a toy is safe for a baby?",
+        "What should I do when a reindeer won't eat?",
+        "How do I wrap something fragile?",
+        "In what order do presents go onto the sleigh?",
+        "A child wrote to say they are sorry for being naughty. How is that counted?",
+        "I'm worn out and it's the busiest week of the year.",
+        "Someone knocked over a pot of glitter by the machines.",
+        "Can I show my family around the toy floor?",
+        "What should I do if a machine catches fire?",
+        "What is the capital of France?",
+    ];
+
+    var sections = ParseHandbook(SeedLoader.LoadHandbookText());
+    var chunks = new List<(string Id, string Section, string Audience, int Index, string Text)>();
+    foreach (var (section, audience, body) in sections)
+    {
+        var words = body.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        var index = 0;
+        for (var start = 0; start < words.Length; start += ChunkWords - OverlapWords)
+        {
+            var take = Math.Min(ChunkWords, words.Length - start);
+            chunks.Add(($"{Slug(section)}-{index++}", section, audience, index - 1, string.Join(' ', words.Skip(start).Take(take))));
+            if (start + ChunkWords >= words.Length) break;
+        }
+    }
+
+    Console.WriteLine($"   Handbook   : {sections.Count} sections, {chunks.Count} chunks of up to {ChunkWords} words, {OverlapWords} words of overlap");
+    Console.WriteLine();
+
+    var (chunkVectors, chunkTokens) = await EmbedAsync(chunks.Select(c => c.Text).ToList(), "document");
+    var (questionVectors, questionTokens) = await EmbedAsync(handbookQuestions, "query");
+
+    var norms = chunkVectors.Concat(questionVectors).Select(Norm).ToList();
+    Console.WriteLine($"   ✅ {chunks.Count} chunks (as documents)    {chunkTokens} tokens");
+    Console.WriteLine($"   ✅ {handbookQuestions.Length} questions (as queries)   {questionTokens} tokens");
+    Console.WriteLine($"   ℹ️  vector length (norm): min {norms.Min():F4}, max {norms.Max():F4}");
+    Console.WriteLine();
+
+    var chunkFile = new JsonObject
+    {
+        ["model"] = Model,
+        ["dimensions"] = Dimensions,
+        ["chunkWords"] = ChunkWords,
+        ["overlapWords"] = OverlapWords,
+        ["chunks"] = new JsonArray(chunks.Select((c, i) => (JsonNode)new JsonObject
+        {
+            ["id"] = c.Id,
+            ["section"] = c.Section,
+            ["audience"] = c.Audience,
+            ["source"] = $"The Elf Handbook › {c.Section}",
+            ["chunkIndex"] = c.Index,
+            ["text"] = c.Text,
+            ["embedding"] = new JsonArray(chunkVectors[i].Select(v => (JsonNode)JsonValue.Create(v)!).ToArray()),
+        }).ToArray()),
+    };
+
+    File.WriteAllText(Path.Combine(outFolder, "handbook-chunks.json"), chunkFile.ToJsonString() + "\n");
+    WriteFile("handbook-questions.json", "query", handbookQuestions.Select((q, i) => (q, questionVectors[i])));
+
+    Console.WriteLine("   Wrote handbook-chunks.json and handbook-questions.json to:");
+    Console.WriteLine($"       {outFolder}");
+    Console.WriteLine();
+    Console.WriteLine("   Next: commit those two files, then rebuild.");
+    Console.WriteLine();
+    return 0;
+}
+
+static List<(string Section, string Audience, string Body)> ParseHandbook(string markdown)
+{
+    var sections = new List<(string, string, string)>();
+    foreach (var block in markdown.Split("\n## ").Skip(1))
+    {
+        var lines = block.Split('\n');
+        var audience = lines.First(l => l.StartsWith("Audience:", StringComparison.Ordinal))["Audience:".Length..].Trim();
+        var body = string.Join(' ', lines.Skip(1).Where(l => !l.StartsWith("Audience:", StringComparison.Ordinal) && l.Trim().Length > 0));
+        sections.Add((lines[0].Trim(), audience, body));
+    }
+
+    return sections;
+}
+
+static string Slug(string text) =>
+    string.Join('-', text.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
 async Task<(List<float[]> Vectors, int Tokens)> EmbedAsync(IReadOnlyList<string> texts, string inputType)
 {
@@ -162,7 +269,7 @@ async Task<(List<float[]> Vectors, int Tokens)> EmbedAsync(IReadOnlyList<string>
         if (vectors[i].Length != Dimensions)
             throw new EmbedException(
                 $"Input {i} ({inputType}) came back with {vectors[i].Length} dimensions, not {Dimensions}. " +
-                "Part 3B's index and tests all say " + Dimensions + ".");
+                "The indexes and tests all say " + Dimensions + ".");
     }
 
     var tokens = JsonNode.Parse(body)?["usage"]?["total_tokens"]?.GetValue<int>() ?? 0;

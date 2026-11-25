@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="SeedData\*.json" />
+    <EmbeddedResource Include="SeedData\*.md" />
   </ItemGroup>
 
 </Project>
