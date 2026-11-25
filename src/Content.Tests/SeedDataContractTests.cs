@@ -362,4 +362,111 @@ public sealed class SeedDataContractTests
             "Part 3B is marked Available, but its vectors (src/Shared/SeedData/toy-embeddings.json and query-embeddings.json) " +
             "aren't in the repository, so its tests can't run. Generate them with tools/embed and commit them first.");
     }
+
+    // ---- Part 4A: the handbook ----------------------------------------------------------------
+
+    private const string HandbookPath = "src/Shared/SeedData/elf-handbook.md";
+    private const string HandbookChunksPath = "src/Shared/SeedData/handbook-chunks.json";
+    private const string HandbookQuestionsPath = "src/Shared/SeedData/handbook-questions.json";
+
+    private sealed record ChunkRow(string Id, string Section, string Audience, string Source, int ChunkIndex, string Text, float[] Embedding);
+
+    private sealed record ChunkFile(string Model, int Dimensions, int ChunkWords, int OverlapWords, List<ChunkRow> Chunks);
+
+    /// <summary>The questions Part 4A's tests use. A missing one would be a KeyNotFoundException deep in a test; say so here, in words.</summary>
+    private static readonly string[] QuestionsPartFourAUses =
+    [
+        "How do I know if a toy is safe for a baby?",
+        "What should I do when a reindeer won't eat?",
+        "How do I wrap something fragile?",
+        "In what order do presents go onto the sleigh?",
+        "A child wrote to say they are sorry for being naughty. How is that counted?",
+        "I'm worn out and it's the busiest week of the year.",
+        "Someone knocked over a pot of glitter by the machines.",
+        "Can I show my family around the toy floor?",
+        "What should I do if a machine catches fire?",
+        "What is the capital of France?",
+    ];
+
+    /// <summary>The handbook cut into chunks by this test project's own few lines (it is deliberately not the learner's code).</summary>
+    private static List<(string Id, string Section, string Audience, int Index, string Text)> ExpectedHandbookChunks(int size, int overlap)
+    {
+        var result = new List<(string, string, string, int, string)>();
+
+        foreach (var block in RepoFiles.Read(HandbookPath).Replace("\r\n", "\n").Split("\n## ").Skip(1))
+        {
+            var lines = block.Split('\n');
+            var section = lines[0].Trim();
+            var audience = lines.First(l => l.StartsWith("Audience:", StringComparison.Ordinal))["Audience:".Length..].Trim();
+            var words = string.Join(' ', lines.Skip(1).Where(l => !l.StartsWith("Audience:", StringComparison.Ordinal)))
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+
+            var index = 0;
+            for (var start = 0; start < words.Length; start += size - overlap)
+            {
+                var id = $"{string.Join('-', section.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries))}-{index}";
+                result.Add((id, section, audience, index++, string.Join(' ', words.Skip(start).Take(size))));
+                if (start + size >= words.Length) break;
+            }
+        }
+
+        return result;
+    }
+
+    [Fact]
+    public void The_elf_handbook_has_ten_sections_each_with_an_audience()
+    {
+        var chunks = ExpectedHandbookChunks(80, 20);
+
+        Assert.Equal(10, chunks.Select(c => c.Section).Distinct().Count());
+        Assert.All(chunks, c => Assert.False(string.IsNullOrWhiteSpace(c.Audience), $"'{c.Section}' has no audience."));
+        Assert.Contains(chunks, c => c.Audience == "all-elves");
+        Assert.Contains(chunks, c => c.Audience == "toy-makers");
+    }
+
+    [Fact]
+    public void Part_4A_vectors_are_complete_and_match_the_handbook_text_once_generated()
+    {
+        if (!RepoFiles.Exists(HandbookChunksPath) || !RepoFiles.Exists(HandbookQuestionsPath))
+            Assert.Skip("Part 4A's vectors haven't been generated yet: run `dotnet run --project tools/embed -- --handbook` with VOYAGE_API_KEY set, and commit the two files.");
+
+        var file = JsonSerializer.Deserialize<ChunkFile>(RepoFiles.Read(HandbookChunksPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        var questions = ReadVectors(HandbookQuestionsPath);
+
+        Assert.Equal("voyage-4", file.Model);
+        Assert.Equal("voyage-4", questions.Model);
+        Assert.Equal(1024, file.Dimensions);
+        Assert.Equal("query", questions.InputType);
+
+        // The vectors describe the TEXT THEY WERE MADE FROM. If the handbook has been edited since, they describe
+        // something that no longer exists, and nothing else would notice. So the shipped chunks must be exactly what
+        // the handbook produces today.
+        var expected = ExpectedHandbookChunks(file.ChunkWords, file.OverlapWords);
+        Assert.True(expected.Select(e => (e.Id, e.Text)).SequenceEqual(file.Chunks.Select(c => (c.Id, c.Text))),
+            "handbook-chunks.json doesn't match src/Shared/SeedData/elf-handbook.md. The handbook was edited after the vectors were made: " +
+            "regenerate them with `dotnet run --project tools/embed -- --handbook`.");
+
+        Assert.Equal(expected.Select(e => (e.Section, e.Audience, e.Index)), file.Chunks.Select(c => (c.Section, c.Audience, c.ChunkIndex)));
+        Assert.All(file.Chunks, c => Assert.Equal($"The Elf Handbook › {c.Section}", c.Source));
+
+        // A vector of another length would be skipped by the index, silently (the dimensions trap), and a chunk with no
+        // direction can't be compared.
+        Assert.All(file.Chunks, c => Assert.True(c.Embedding.Length == 1024, $"'{c.Id}' has {c.Embedding.Length} dimensions, not 1024."));
+        Assert.All(file.Chunks, c => Assert.Equal(1.0, Math.Sqrt(c.Embedding.Sum(x => (double)x * x)), precision: 2));
+        Assert.All(questions.Embeddings, kv => Assert.True(kv.Value.Length == 1024, $"'{kv.Key}' has {kv.Value.Length} dimensions, not 1024."));
+
+        foreach (var question in QuestionsPartFourAUses)
+            Assert.True(questions.Embeddings.ContainsKey(question), $"handbook-questions.json has no vector for \"{question}\", which Part 4A uses.");
+    }
+
+    [Fact]
+    public void Part_4A_cannot_be_released_without_its_vectors()
+    {
+        var released = RepoFiles.Parts().Single(p => p.Id == "4A").Available;
+        var generated = RepoFiles.Exists(HandbookChunksPath) && RepoFiles.Exists(HandbookQuestionsPath);
+
+        Assert.True(!released || generated,
+            "Part 4A is marked Available, but its vectors (src/Shared/SeedData/handbook-chunks.json and handbook-questions.json) " +
+            "aren't in the repository, so its tests can't run. Generate them with tools/embed --handbook and commit them first.");
+    }
 }

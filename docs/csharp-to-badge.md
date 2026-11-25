@@ -280,6 +280,24 @@ doesn't change any score. A `$match` after it narrows what's already been chosen
 fewer than `limit`. Pre-filtered queries are typically slower than unfiltered ones (MongoDB's docs say so),
 and a filter that is too restrictive is a problem of its own.
 
-## Part 4 — RAG and agents
+## Part 4A — RAG
 
-*Added when Part 4 ships.*
+A RAG pipeline is a few small pieces you already know (a chunker, an embedding call, a vector index, a `$vectorSearch`) plus a prompt.
+The badge may show the same ideas in Python, but the MongoDB parts are identical.
+
+| What you want | Shell / Atlas / REST | C# |
+|---|---|---|
+| Chunk with overlap | a loop over words: window `size`, step `size − overlap` | `Chunker.SplitIntoChunks` |
+| Store a chunk with its metadata | `db.handbook_chunks.insertOne({ _id, section, audience, source, text, embedding })` | `ReplaceOneModel<HandbookChunk>` with `IsUpsert = true` |
+| Remove chunks that no longer exist | `deleteMany({ section: { $in: names }, _id: { $nin: keep } })` | `DeleteManyAsync(c => names.Contains(c.Section) && !keep.Contains(c.Id))` |
+| A vector index with filter fields | `createSearchIndex("n", "vectorSearch", { fields: [ { type: "vector", ... }, { type: "filter", path: "section" } ] })` | `SearchIndexes.CreateOneAsync(new CreateSearchIndexModel("n", SearchIndexType.VectorSearch, definition))` |
+| Search, narrowed first | `{ $vectorSearch: { ..., filter: { section: "Toy Safety" } } }` | `VectorSearchOptions<T> { Filter = Builders<T>.Filter.Eq(c => c.Section, "Toy Safety") }` |
+| Embed a question (not a stored chunk) | `POST /v1/embeddings` with `"input_type": "query"` | `IEmbedder.EmbedAsync(question, "query")` |
+| Call the language model | `POST /chat/completions` with `messages` (system, then user) | `IChatClient.GetResponseAsync(messages)` |
+| Give an agent the search as a tool | a function the model may call | `TextSearchProvider` (Agent Framework) over a `Func<string, CancellationToken, Task<IEnumerable<TextSearchResult>>>` |
+
+The same retriever through Semantic Kernel's MongoDB connector (a **preview** package) is shown, with what it does and doesn't do, in Part 4A's README.
+
+## Part 4B — Agents
+
+*Added when Part 4B ships.*

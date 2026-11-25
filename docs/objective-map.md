@@ -280,21 +280,38 @@ Legend: 🛠️ built and tested · 📖 taught from the documentation, **not ru
 ---
 
 ## Part 4A — Santa's Elf Assistant: RAG
-**Anchor badge:** RAG with MongoDB · **Release:** Dec 17
+**Anchor badge:** RAG with MongoDB · **Level:** Intermediate · **Release:** Dec 17
+
+**Status: ✅ complete.** 8/8 objectives have a step, tests and a checklist line. 73 tests: 68 for the steps, all red on the starter
+and green on the published solutions, plus 5 on the already-written `ElfLlm` (green from the start). Verified 2026-11-25 against **real `voyage-4`
+vectors** made by `tools/embed --handbook`: three red/green cycles and twelve consecutive green runs. Two objectives are *definitions*, which a test can only partly prove (🖐️).
 
 | Objective | Step | Test | Status |
 |---|---|---|---|
-| Define RAG and its use cases | — | — | ⬜ |
-| LLM limitations and how RAG addresses them | — | — | ⬜ |
-| Atlas Vector Search RAG architecture components | — | — | ⬜ |
-| Suitable structured and unstructured sources | — | — | ⬜ |
-| Implement data collection, preparation and ingestion | — | — | ⬜ |
-| Chunk overlap | — | — | ⬜ |
-| A prefiltered retriever | — | — | ⬜ |
-| A generator separate from the embedding model | — | — | ⬜ |
+| Define RAG and its use cases | Step 7 · `BuildPrompt` (and "What is RAG?") | `Step07_TwoMessagesInOrder`, `…_TheExtractsAreInThePrompt`, `…_TheQuestionIsLast`, `…_NoExtractsStillBuilds` | 🖐️ the definition and use cases are read, not tested; the tests prove the retrieved text reaches the prompt |
+| LLM limitations and how RAG addresses them | Steps 7, 8 · `BuildPrompt`, `AskAsync` (and the "what a language model can't do" table) | `Step07_TheRulesStopTheModelGuessing`, `Step08_AdmitsWhenItDoesNotKnow`, `Step08_TheBarIsTheMinimumScore` | 🖐️ the limits are explained, and the tests prove each rule that answers one (use only the extracts; admit it; cite) |
+| Atlas Vector Search RAG architecture components | Step 8 · `AskAsync` (and "The pieces") | `Step08_EmbedsRetrievesAndGenerates`, `…_CitesItsSources`, `…_TheFilterReachesTheRetriever` | ✅ |
+| Suitable structured and unstructured sources | Steps 1, 2 · `ParseHandbook`, `ToyToText` | `Step01_FindsEverySection`, `…_ReadsTheAudience`, `…_TheBodyIsJustTheText`, `Step02_CarriesTheFacts`, `…_SaysWhetherItIsInStock`, `…_SaysWhetherItIsDiscontinued` | ✅ (when to embed and when to query is taught, not tested) |
+| Implement data collection, preparation and ingestion | Steps 1, 4 · `ParseHandbook`, `IngestAsync` | `Step01_KeepsParagraphsAndIgnoresThePreface`, `…_HandlesWindowsLineEndings`, `…_RefusesASectionWithNoAudience`, `Step04_StoresEveryChunk`, `…_KeepsTheMetadata`, `…_EmbedsEachChunkAsADocument`, `…_IsSafeToRunTwice`, `…_RemovesChunksThatNoLongerExist`, `…_IngestingTheHandbookMakesTheShippedChunks` | ✅ |
+| Chunk overlap | Step 3 · `SplitIntoChunks` | `Step03_TheWorkedExample`, `…_NeighboursShareTheOverlap`, `…_NoOverlap`, `…_NothingIsLostAndNothingIsTooLong`, `…_NoRedundantTail`, `…_RefusesImpossibleSettings`, `…_MakesTheShippedChunks` | ✅ |
+| A prefiltered retriever | Steps 5, 6, 9 · `CreateIndexAsync`, `RetrieveAsync`, `AsTextSearch` | `Step05_DeclaresTheVectorField`, `…_DeclaresTheFilterFields`, `…_TheIndexAnswersQueries`, `Step06_MatchesTheBruteForceAnswer`, `…_FiltersBySection`, `…_FiltersByAudience`, `…_BothFiltersMustMatch`, `…_APreFilterKeepsLookingUntilItHasEnough`, `…_NothingMatchesTheFilter`, `Step09_RespectsTheFilterAndTheBar` | ✅ (the Atlas UI half of creating the index is 🖐️, as in Part 3B) |
+| A generator separate from the embedding model | Step 8 · `AskAsync`, `ElfLlm` (and "Two models, on purpose") | `Step08_TheTwoModelsDoDifferentJobs` | ✅ the constructor takes both, and the test shows each sees only its own input |
 
-> The last one is free: the generator is Gemini and the embedding model is Voyage.
-> Part 4A's README names this explicitly rather than leaving it implicit.
+> The last objective is nearly free, as predicted: the generator is Gemini and the embedding model is Voyage. The README
+> names this explicitly in its own section (`### Two models, on purpose`) rather than leaving it implicit, and a content test
+> keeps that section from being lost.
+
+### What was run, and what wasn't
+
+- **Run against real services:** `tools/embed --handbook` (Voyage `voyage-4`, 40 chunks and 10 questions, every vector norm 1.0000). `tools/llm-check` against **Gemini on Google Cloud (Vertex AI)**, location `global`, model `gemini-3.8-flash`: all four checks passed (answers, answers from extracts, declines when the extracts don't help, and makes a tool call). The same model in `us-central1` returned *not found*. **Not run:** the Google AI Studio route (the author's organisation blocks creating AI Studio keys), so its endpoint, model name and limits are as documented, not observed.
+- **Run on Atlas Local 8.0.15, with a stand-in for the models:** every test. The relevance bar (0.67) is measured against the real vectors: nine answerable questions scored 0.717–0.850 on their best chunk, and the unrelated one scored 0.627.
+- **Run against `MongoVectorStore` (1.74.0-preview) on Atlas Local, in a throwaway project:** the connector creates the
+  vector index itself (named `vector_index`), reads an existing collection and index when its record is mapped with
+  `[BsonElement]` and `MongoCollectionOptions.VectorIndexName` is set, and returns scores equal to `$vectorSearch`'s. Equality,
+  `!=`, `&&`, `||`, `Contains` and numeric-range filters worked; a **string** comparison threw `NotSupportedException`. With
+  the default index name it silently returned nothing. The README's "Going further" says exactly this. It is **not** covered by a test:
+  it is a preview package, so a test would make the part's build depend on it.
+- **Not run:** the Atlas UI for creating the index (🖐️); anything on Atlas M0; `tools/ask` against real keys (it was run end to end against mock Voyage and Gemini servers, with a solved Starter); timings (the "about an hour and a half" is an estimate).
 
 ---
 

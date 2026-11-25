@@ -30,6 +30,13 @@
   <Folder Name="/part3b-vector-search/Tests/">
     <Project Path="part3b-vector-search/Tests/Part3B.Tests.csproj" />
   </Folder>
+  <Folder Name="/part4a-rag/" />
+  <Folder Name="/part4a-rag/Starter/">
+    <Project Path="part4a-rag/Starter/Part4A.Starter.csproj" />
+  </Folder>
+  <Folder Name="/part4a-rag/Tests/">
+    <Project Path="part4a-rag/Tests/Part4A.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Content/">
     <Project Path="src/Content/SantasWorkshop.Content.csproj" />
@@ -41,8 +48,14 @@
     <Project Path="src/Shared/SantasWorkshop.Shared.csproj" />
   </Folder>
   <Folder Name="/tools/" />
+  <Folder Name="/tools/ask/">
+    <Project Path="tools/ask/SantasWorkshop.Ask.csproj" />
+  </Folder>
   <Folder Name="/tools/embed/">
     <Project Path="tools/embed/SantasWorkshop.Embed.csproj" />
+  </Folder>
+  <Folder Name="/tools/llm-check/">
+    <Project Path="tools/llm-check/SantasWorkshop.LlmCheck.csproj" />
   </Folder>
   <Folder Name="/tools/voyage-check/">
     <Project Path="tools/voyage-check/SantasWorkshop.VoyageCheck.csproj" />

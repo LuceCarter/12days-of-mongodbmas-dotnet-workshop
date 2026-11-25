@@ -245,6 +245,43 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void Part_4A_has_all_nine_steps_in_its_table_of_contents_and_all_nine_solutions()
+    {
+        var steps = Rendered["parts/4A"].Toc
+            .Where(t => t.Level == 3)
+            .Select(t => Regex.Match(t.Text, @"^Step (\d+) —"))
+            .Where(m => m.Success)
+            .Select(m => int.Parse(m.Groups[1].Value))
+            .ToList();
+
+        Assert.Equal(Enumerable.Range(1, 9), steps);
+        Assert.Equal(9, Regex.Matches(Rendered["parts/4A/solutions"].Html, @"<summary><b>Step (\d+) —").Count);
+    }
+
+    [Fact]
+    public void Part_4A_leaves_no_unfilled_measurement_markers_in_its_readme()
+    {
+        // Numbers that depend on the real vectors are written in after they are measured. A marker left behind would ship a gap.
+        Assert.DoesNotContain("TODO-MEASURE", RepoFiles.Read("part4a-rag/README.md"));
+    }
+
+    [Fact]
+    public void Part_4A_warns_up_front_that_vector_search_always_answers_and_names_both_models()
+    {
+        // The two things that fail quietly in RAG: a search that always returns its nearest neighbours however poor,
+        // and a chunk cut in half. And the objective "a generator separate from the embedding model" has to be said, not implied.
+        var readme = RepoFiles.Read("part4a-rag/README.md");
+        var firstScreen = readme[..readme.IndexOf("## The story", StringComparison.Ordinal)];
+
+        Assert.Contains("always returns something", firstScreen);
+        Assert.Contains("## What is RAG?", readme);
+        Assert.Contains("### Two models, on purpose", readme);
+        Assert.Contains("IEmbedder", readme);
+        Assert.Contains("IChatClient", readme);
+        Assert.Contains("relevance bar", readme[readme.IndexOf("### Step 8", StringComparison.Ordinal)..readme.IndexOf("### Step 9", StringComparison.Ordinal)]);
+    }
+
+    [Fact]
     public void Every_step_in_a_readme_has_a_matching_solution()
     {
         // The two files are written separately, so nothing else stops a step being added to one and

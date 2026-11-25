@@ -168,14 +168,14 @@ All pinned centrally in `Directory.Packages.props`.
 
 Things to confirm before the part that depends on them ships.
 
-- [ ] Gemini free-tier RPM/RPD figures, and which model ID is on the free tier. *(Part 4)*
+- [ ] Gemini free-tier RPM/RPD figures, and which model ID is on the free tier. *(Part 4)* **Still open for Google AI Studio.** Its public pages give no per-model figures (they point to the signed-in account), and the author's organisation blocks creating AI Studio keys, so that route has never been run. The model answered on **Vertex AI** (`global`, `gemini-3.8-flash`); see the Part 4A section.
 - [ ] Whether `voyage-3.5` is free-tier eligible today, and its dimension count. *(Part 3B)*
-- [ ] Whether `MongoVectorStore` creates the Atlas vector index itself or needs a
-      pre-existing one — the docs do not say. *(Part 4A)*
-- [ ] Whether a newer `Microsoft.SemanticKernel.Connectors.MongoDB` preview has shipped
-      past `1.74.0-preview`. *(Part 4A)*
-- [ ] That VectorData `10.11.0` resolves cleanly for both the SK connector (`>= 10.1.0`)
-      and Agent Framework (`>= 10.10.0`). *(Part 4)*
+- [x] Whether `MongoVectorStore` creates the Atlas vector index itself or needs a
+      pre-existing one — the docs do not say. *(Part 4A)* **Answered by running it (2026-11-25):** `EnsureCollectionExistsAsync` creates it, named `vector_index`.
+- [x] Whether a newer `Microsoft.SemanticKernel.Connectors.MongoDB` preview has shipped
+      past `1.74.0-preview`. *(Part 4A)* **No (2026-11-25): `1.74.0-preview` is still the latest.**
+- [x] That VectorData `10.11.0` resolves cleanly for both the SK connector (`>= 10.1.0`)
+      and Agent Framework (`>= 10.10.0`). *(Part 4)* **Yes, but VectorData and `Microsoft.Extensions.AI` have since published 11.x. The part pins the 10.11.1 set, because Agent Framework 1.28.0 and the connector were built against 10.x.**
 - [ ] **Does the CRUD Overview (C# edition) assessment show Builders or LINQ in its
       questions?** We lead with Builders because it maps 1:1 onto the shell syntax the
       other nine badges use. Both styles appear in Part 1 either way — only the ordering
@@ -665,7 +665,7 @@ which read as a label rather than something to do. It now says **Earn a skill ba
 
 Two cases where that wording alone would be wrong, handled deliberately:
 
-- **Part 4 has two badges** (RAG and AI Agents). Two identical "Earn a skill badge" buttons going to
+- **Part 4 had two badges** (RAG and AI Agents), and the card is now split into 4A and 4B (see the Part 4A section), so each card has one. The code still handles a card with two. Two identical "Earn a skill badge" buttons going to
   different places can't be told apart by anyone — and identical link text with different destinations
   is an accessibility failure (WCAG 2.4.4). On that card each button reads "Earn a skill badge: <name>".
 - **The "Level up" list** is not on the cards and holds three different badges side by side, so it keeps
@@ -1049,3 +1049,80 @@ should be deleted in Atlas.
 
 - Atlas UI vector-index labels, Atlas M0 and timings: unchanged from above.
 - Three API keys were pasted into the session transcript during setup. Luce was told to delete them.
+
+---
+
+## 2026-11-25 — Part 4A: Santa's Elf Assistant: RAG
+
+**Written and verified against real `voyage-4` vectors.** `"Available"` stays `false`: the badge URL is still a placeholder.
+A content test refuses a release without the vectors, and another fails if the handbook is edited without regenerating them.
+
+### Scope, as agreed with Luce
+
+- **Retrieval is the raw driver in the steps; the framework connector is a bridge** (Luce's choice). Learners build the chunker, ingestion, index and
+  prefiltered retriever with skills they already have, and Step 9 shapes the retriever as the delegate Agent Framework's `TextSearchProvider`
+  wants. `MongoVectorStore` is shown in the README, with what running it did.
+- **The Gemini model is a config value plus a check Luce runs** (`tools/llm-check`); **the Elf Handbook is written by me, embedded by Luce** with `tools/embed --handbook`, and ships in the repo.
+- **The Part 4 card is split into 4A (`part4a-rag/`) and 4B (`part4b-agent/`)**, like 3A/3B. The landing page renders one README per folder. Proposed
+  by me, not explicitly confirmed by Luce, and easy to revert (`appsettings.json`, the CI row, the solution file).
+
+### The part
+
+- **Nine steps, 73 tests.** Steps: parse the handbook (unstructured source), turn a toy into text (structured source), chunk with overlap, ingest, create the
+  index with filter fields, a prefiltered retriever, the grounded prompt, `AskAsync`, and a retrieval tool for Agent Framework. 68 tests are red on the
+  starter; 5 test the already-written `ElfLlm` and are green from the start (labelled "Already written").
+- **The handbook:** ten sections, 2,262 words, each with an audience; **40 chunks** of up to 80 words with 20 overlap, by **words** (simple and deterministic;
+  the README says real systems often use tokens). Chunk ids are stable (`toy-safety-1`), so ingestion can replace by id.
+- **Chunker contract:** the shipped vectors describe the shipped chunks, so the learner's chunker must reproduce them exactly. A Part 4A test checks it, and a
+  content test checks the shipped chunks equal what the handbook produces today.
+- **Starter independence:** the Starter carries its own finished `VoyageEmbedder` (learners may have skipped 3B).
+- **Relevance bar = 0.67.** A vector search always returns its nearest neighbours, so `AskAsync` drops chunks under a minimum score and doesn't call the model if none are left.
+  Measured on the real vectors: nine answerable questions scored 0.717–0.850 on their best chunk (all found the right section), and the unrelated question scored 0.627.
+  **Ten questions is a tiny sample and the gap is about 0.09**; the README says to re-measure for any other model or chunk size.
+- **Ingestion removes chunks that no longer exist**, not only replaces by id. Found while writing the tests: re-running after a section shrinks would otherwise leave a stale chunk that the
+  assistant keeps quoting.
+
+### Packages
+
+`Microsoft.Agents.AI` 1.28.0, `Microsoft.Extensions.AI` / `.Abstractions` / `.OpenAI` 10.11.1, `Microsoft.Extensions.VectorData.Abstractions` 10.11.1, and
+`Microsoft.SemanticKernel.Connectors.MongoDB` 1.74.0-preview (pinned; used by no project yet). Everything stays on the 10.x line deliberately: 11.x exists, but Agent Framework 1.28.0
+asks for `Microsoft.Extensions.AI` 10.11.0 and mixing majors is asking for a runtime surprise.
+
+### `MongoVectorStore`, run on Atlas Local 8.0.15 (a throwaway project, not committed; 1.74.0-preview)
+
+- **It reads an existing collection and index** if the record is mapped with `[BsonElement]` and `MongoCollectionOptions.VectorIndexName` is set. Without the `BsonElement`s it uses the property names
+  (`Section`, not `section`) and ignored `StorageName`.
+- **Silent failure, again:** with the default index name it looks for `vector_index`; ours had another name; **zero results, no error.**
+- **`EnsureCollectionExistsAsync` creates the vector index** (`vector_index`) and declares as filters the fields marked `IsIndexed`.
+- **Its score equals `$vectorSearch`'s** (it matched to the digits shown), not a rescaled one.
+- **The plan's premise was wrong.** The plan (from Microsoft's docs) said its filters are `EqualTo` only. Run for real: `==`, `!=`, `&&`, `||`, `Contains` and numeric ranges (`>=`, between) all worked.
+  A **string** comparison (`>=` on text) threw `NotSupportedException`. The README says what ran and does not repeat the documented limit.
+- `VectorSearchOptions<T>` exists in both `MongoDB.Driver` and `Microsoft.Extensions.VectorData`: unqualified, it doesn't compile. Taught in the README.
+- **Not covered by a test**, on purpose: a test would make the part's build depend on a preview package.
+
+### Gemini, and Google Cloud
+
+- **Luce's organisation blocks creating Google AI Studio keys.** So the part supports **two routes through the same `IChatClient`**: AI Studio (the default; `GEMINI_API_KEY`) and **Gemini on Vertex AI**
+  (`GOOGLE_CLOUD_PROJECT`, with a token from `gcloud auth print-access-token`, or `GOOGLE_CLOUD_ACCESS_TOKEN`), through Vertex's OpenAI-compatible endpoint. Vertex is billed to the project, so it isn't the default for learners.
+- **Run, on Vertex, by Luce:** `gemini-3.8-flash` in **`global`**: all four `llm-check` checks passed (it answers; answers from extracts; declines when they don't help; makes a tool call).
+  **The same model in `us-central1` returned 404 "not found or your project does not have access"**, although it is in Vertex's model list. So the default location is `global`, and the `global` hostname has no region
+  in it (`aiplatform.googleapis.com`, not `global-aiplatform...`), which the code handles and tests.
+- **Listing the models a project can see** needs the project sent as `x-goog-user-project` when signed in with `gcloud`; `llm-check` does this when a model isn't found.
+- **Not run: the AI Studio route.** Its model name and limits are from Google's pricing page (read by a subagent that said part of the page was only summarised), so they are documented, not observed. Per-model
+  free-tier limits are not on Google's public pages. The pricing page lists free-tier use as "Used to improve our products: Yes", which the docs repeat as a warning.
+- **I could not read Google Cloud's own docs** (the fetch was blocked); the Vertex endpoint pattern and `google/` model prefix come from search results quoting them, and were then confirmed by the run above.
+- **User secrets** are now real for `tools/ask` (`dotnet user-secrets set ... --project tools/ask`): `docs/setup.md` had advised them while nothing read them. Verified. The other tools read environment variables only.
+
+### Tests and flakiness (found by running them, fixed)
+
+- **A freshly built vector index reports `queryable` before it has indexed every document.** The first Part 4A run on new data returned empty results for the earliest tests. The fixture now waits until a probe query returns all 40 chunks.
+- **A reference collection with a fixed name collides with the previous run's index**, which is torn down in the background: 3 of 8 back-to-back runs timed out. The reference collection now gets a unique name each run (and leftovers are cleaned up), like the scratch collections.
+  After the fix: 12 consecutive green runs and 3 red/green cycles. **Parts 3A and 3B's fixtures still use fixed names for their reference collections.** They have passed every run so far (25+ green runs for 3B), but they share the pattern that failed here, so they may deserve the same fix.
+- A test that measured the learner's own code only through the test's helper passed on the bare starter in Part 3B (fixed there); in 4A the chunker test calls the learner's `SplitIntoChunks` directly.
+
+### Not verified, and said so
+
+- **`tools/ask` against real keys:** run end to end only against mock Voyage and Gemini servers, with a solved Starter.
+- **Google AI Studio** (above), **Atlas M0**, **the Atlas UI** for creating the index, and **timings** ("about an hour and a half" is an estimate).
+- **The bar (0.67)** rests on ten questions.
+- The README's claim that real systems often chunk by tokens, sentences or document structure, and that 10–20% overlap is a common starting point, is general practice, not something measured here.
