@@ -44,6 +44,9 @@
   <Folder Name="/tools/embed/">
     <Project Path="tools/embed/SantasWorkshop.Embed.csproj" />
   </Folder>
+  <Folder Name="/tools/voyage-check/">
+    <Project Path="tools/voyage-check/SantasWorkshop.VoyageCheck.csproj" />
+  </Folder>
   <Folder Name="/tools/seed/">
     <Project Path="tools/seed/SantasWorkshop.Seed.csproj" />
   </Folder>

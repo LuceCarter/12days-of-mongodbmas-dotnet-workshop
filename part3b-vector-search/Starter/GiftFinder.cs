@@ -15,12 +15,13 @@ namespace Part3B.Starter;
 /// tell you when a step is right. Stuck? <c>SOLUTIONS.md</c> has the answers.
 ///
 /// You do <b>not</b> need an API key for any of it. Every toy already has a vector, made by Voyage AI's
-/// <c>voyage-3.5</c> model and shipped with the repository, and so do the example questions.
+/// <c>voyage-4</c> model and shipped with the repository, and so do the example questions.
 /// </remarks>
 public sealed class GiftFinder(
     IMongoCollection<Toy> toys,
     VoyageEmbedder? embedder = null,
-    string indexName = GiftFinder.DefaultIndex)
+    string indexName = GiftFinder.DefaultIndex,
+    VoyageReranker? reranker = null)
 {
     /// <summary>What Step 4 calls its index.</summary>
     public const string DefaultIndex = "toys-vectors";
@@ -31,6 +32,7 @@ public sealed class GiftFinder(
     private readonly IMongoCollection<Toy> _toys = toys;
     private readonly VoyageEmbedder? _embedder = embedder;
     private readonly string _indexName = indexName;
+    private readonly VoyageReranker? _reranker = reranker;
 
     // ─────────────────────────────────────────────────────────────────────────
     //  Already written for you
@@ -230,6 +232,83 @@ public sealed class GiftFinder(
         //
         // If there is no embedder, throw an InvalidOperationException that says why.
         throw new NotImplementedException("Step 8: embed the question, then search.");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Stretch — Vector Search Performance
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Stretch S2 (badge objectives: reranking, and when to use it; using Voyage reranking models) — a
+    /// <b>two-stage</b> search: a fast vector search finds <paramref name="candidates"/> toys, then the reranking
+    /// model puts them in order of how well each one answers the question, and the best
+    /// <paramref name="keep"/> are returned. The score is the reranker's relevance.
+    /// </summary>
+    public Task<List<ToyHit>> FindThenRerankAsync(string question, int candidates, int keep)
+    {
+        // TODO (Stretch S2): Four moves.
+        //   1. Embed the question as a "query" (Step 8 did).
+        //   2. FindSimilarAsync(vector, candidates): stage one, fast and approximate.
+        //   3. Look up those toys' descriptions (_toys.Find(t => names.Contains(t.Name))), in the ORDER stage one
+        //      returned them: the reranker is told which document is which by position.
+        //   4. _reranker!.RerankAsync(question, descriptions, keep), then turn each Reranked back into a toy:
+        //          Index → the toy at that position;  RelevanceScore → ToyHit.Score.
+        //
+        // If there is no embedder or no reranker, throw an InvalidOperationException that says which is missing.
+        throw new NotImplementedException("Stretch S2: vector search, then rerank.");
+    }
+
+    /// <summary>
+    /// Stretch S3 (badge objective: effects of dimensionality on quality, latency and cost) — make a vector
+    /// shorter by keeping only its first <paramref name="dimensions"/> numbers, then scaling it back to length 1.
+    /// </summary>
+    /// <remarks>
+    /// This works because Voyage trains its models with <b>Matryoshka</b> learning, so the first numbers of a vector
+    /// are themselves a (slightly less precise) shorter vector, like nested dolls. A shorter vector costs less to
+    /// store, to search and to send.
+    /// </remarks>
+    public static float[] Shorten(float[] vector, int dimensions)
+    {
+        // TODO (Stretch S3):
+        //   - If `dimensions` is below 1 or more than the vector has, throw an ArgumentOutOfRangeException.
+        //   - Keep the first `dimensions` numbers.
+        //   - Scale them so the new vector's magnitude is 1 again (divide each by the square root of the sum of squares).
+        //     Cutting numbers off shortens the arrow, and cosine and dot product both need it to be length 1.
+        //   - Sum in double, return float.
+        throw new NotImplementedException("Stretch S3: truncate, then renormalise.");
+    }
+
+    /// <summary>
+    /// Stretch S4 (badge objective: effects of dimensionality on quality, latency and cost) — create a vector
+    /// index over <paramref name="path"/> with <paramref name="dimensions"/> numbers per vector, optionally
+    /// <b>quantized</b> (<c>"none"</c>, <c>"scalar"</c> or <c>"binary"</c>), and wait until it is ready.
+    /// </summary>
+    public Task CreateCompactIndexAsync(string indexName, string path, int dimensions, string quantization = "none")
+    {
+        // TODO (Stretch S4): Step 4's definition, with three differences:
+        //   - the vector field's `path` and `numDimensions` come from the parameters, and `similarity` is "cosine";
+        //   - add  { "quantization", quantization }  to the vector field;
+        //   - no filter fields are needed.
+        // Then CreateOneAsync (SearchIndexType.VectorSearch) and WaitUntilQueryableAsync(indexName).
+        //
+        // `quantization` stores each number in less space: "scalar" in one byte, "binary" in one bit (instead of the
+        // four bytes of a float). "binary" needs numDimensions to be a multiple of 8.
+        throw new NotImplementedException("Stretch S4: a compact vector index.");
+    }
+
+    /// <summary>
+    /// Already written: gives every toy a shortened copy of its vector (in <c>descriptionEmbeddingShort</c>), using
+    /// your <see cref="Shorten"/>. A 256-dimension index needs vectors that are 256 long, and this is where they come from.
+    /// </summary>
+    public async Task StoreShortVectorsAsync(int dimensions)
+    {
+        var toys = await _toys.Find(_ => true).ToListAsync();
+
+        var updates = toys.Select(t => new UpdateOneModel<Toy>(
+            Builders<Toy>.Filter.Eq(x => x.Id, t.Id),
+            Builders<Toy>.Update.Set(x => x.DescriptionEmbeddingShort, Shorten(t.DescriptionEmbedding!, dimensions))));
+
+        await _toys.BulkWriteAsync(updates);
     }
 }
 

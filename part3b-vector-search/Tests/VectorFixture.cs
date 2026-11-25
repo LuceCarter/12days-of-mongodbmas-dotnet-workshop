@@ -185,6 +185,22 @@ internal sealed class FakeVoyage(Func<JsonNode, HttpResponseMessage> respond) : 
         return respond(body);
     }
 
+    /// <summary>A 200 shaped like Voyage's rerank reply: these rows, most relevant first.</summary>
+    public static HttpResponseMessage Reranked(params (int Index, double Score)[] rows) => new(System.Net.HttpStatusCode.OK)
+    {
+        Content = new StringContent(new JsonObject
+        {
+            ["object"] = "list",
+            ["data"] = new JsonArray(rows.Select(r => (JsonNode)new JsonObject
+            {
+                ["index"] = r.Index,
+                ["relevance_score"] = r.Score,
+            }).ToArray()),
+            ["model"] = "rerank-3",
+            ["usage"] = new JsonObject { ["total_tokens"] = 40 },
+        }.ToJsonString(), System.Text.Encoding.UTF8, "application/json"),
+    };
+
     /// <summary>A 200 whose single vector is <paramref name="vector"/>.</summary>
     public static HttpResponseMessage Ok(float[] vector) => new(System.Net.HttpStatusCode.OK)
     {
@@ -197,7 +213,7 @@ internal sealed class FakeVoyage(Func<JsonNode, HttpResponseMessage> respond) : 
                 ["embedding"] = new JsonArray(vector.Select(v => (JsonNode)JsonValue.Create(v)!).ToArray()),
                 ["index"] = 0,
             }),
-            ["model"] = "voyage-3.5",
+            ["model"] = "voyage-4",
             ["usage"] = new JsonObject { ["total_tokens"] = 7 },
         }.ToJsonString(), System.Text.Encoding.UTF8, "application/json"),
     };

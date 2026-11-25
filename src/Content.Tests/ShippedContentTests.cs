@@ -207,6 +207,29 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void Part_3B_has_all_four_stretch_steps_and_all_four_stretch_solutions()
+    {
+        var stretch = Rendered["parts/3B"].Toc
+            .Select(t => Regex.Match(t.Text, @"^Stretch S(\d+) —")).Where(m => m.Success)
+            .Select(m => int.Parse(m.Groups[1].Value)).ToList();
+
+        Assert.Equal(Enumerable.Range(1, 4), stretch);
+        Assert.Equal(4, Regex.Matches(Rendered["parts/3B/solutions"].Html, @"<summary><b>Stretch S(\d+) —").Count);
+    }
+
+    [Fact]
+    public void Part_3B_says_which_stretch_objectives_are_built_and_which_are_only_taught()
+    {
+        // The stretch checklist is honest about what was run. Losing the legend would turn "taught" into "claimed".
+        var readme = RepoFiles.Read("part3b-vector-search/README.md");
+        var checklist = readme[readme.IndexOf("### Stretch badge checklist", StringComparison.Ordinal)..readme.IndexOf("## 🚀 Level up", StringComparison.Ordinal)];
+
+        Assert.Contains("📖", checklist);
+        Assert.Contains("🛠️", checklist);
+        Assert.Contains("not run here", checklist);
+    }
+
+    [Fact]
     public void Part_3B_teaches_the_dimensions_trap_where_a_reader_cannot_miss_it()
     {
         // Atlas builds a vector index with the wrong numDimensions and reports it ready. That silent

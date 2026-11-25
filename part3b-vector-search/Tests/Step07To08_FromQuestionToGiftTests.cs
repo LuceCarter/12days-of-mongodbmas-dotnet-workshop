@@ -30,9 +30,21 @@ public sealed class Step07To08_FromQuestionToGiftTests(VectorFixture fixture) : 
         Assert.Equal(VoyageEmbedder.Endpoint, request.RequestUri!.ToString());
         Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
         Assert.Equal(Key, request.Headers.Authorization.Parameter);
-        Assert.Equal("voyage-3.5", (string?)body["model"]);
+        Assert.Equal(VoyageEmbedder.DefaultModel, (string?)body["model"]);
+        Assert.Equal("voyage-4", VoyageEmbedder.DefaultModel);
         Assert.Equal(1024, (int?)body["output_dimension"]);
         Assert.Equal("a rainy-day game", (string?)body["input"]![0]);
+    }
+
+    [Fact(DisplayName = "Step 7 (obj 2) — it talks to whichever host it's given (a key made in MongoDB Atlas uses ai.mongodb.com)")]
+    public async Task Step07_UsesTheHostItIsGiven()
+    {
+        var voyage = new FakeVoyage(_ => FakeVoyage.Ok(VectorOf("Rocking Horse")));
+        var embedder = new VoyageEmbedder(new HttpClient(voyage), Key, baseUrl: "https://ai.mongodb.com/");
+
+        await embedder.EmbedAsync("anything", "query");
+
+        Assert.Equal("https://ai.mongodb.com/v1/embeddings", voyage.Calls[0].Request.RequestUri!.ToString());
     }
 
     [Theory(DisplayName = "Step 7 (obj 2) — a stored document and a question are embedded differently")]

@@ -26,6 +26,21 @@ public sealed class ObjectiveCoverageTests
             .ToList();
     }
 
+    /// <summary>The stretch badge's objectives: the table under "### Stretch — Vector Search Performance".</summary>
+    private static List<string> StretchObjectivesFor(string partId, string stretchHeading)
+    {
+        var map = RepoFiles.Read("docs/objective-map.md");
+        var part = Regex.Match(map, $@"^## Part {Regex.Escape(partId)} —.*?(?=^## |\z)", RegexOptions.Singleline | RegexOptions.Multiline).Value;
+        var stretch = Regex.Match(part, $@"^### {Regex.Escape(stretchHeading)}.*?(?=^### |\z)", RegexOptions.Singleline | RegexOptions.Multiline).Value;
+        var table = Regex.Match(stretch, @"(^\|.*\n)+", RegexOptions.Multiline).Value;
+
+        return table.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(row => row.Split('|').Select(c => c.Trim()).ToArray())
+            .Where(cells => cells.Length > 2 && !cells[1].StartsWith("---") && cells[1] != "Objective")
+            .Select(cells => cells[1])
+            .ToList();
+    }
+
     private static string Normalise(string text) =>
         Regex.Replace(text.Replace("→", "->").Replace("`", "").Replace("**", ""), @"\s+", " ").Trim().ToLowerInvariant();
 
@@ -68,5 +83,30 @@ public sealed class ObjectiveCoverageTests
         }
 
         Assert.Empty(stale);
+    }
+
+    [Fact]
+    public void Part_3B_readme_repeats_every_objective_of_its_stretch_badge()
+    {
+        // A stretch badge is optional, but it is still a promise: every objective it assesses has to appear in the
+        // README's stretch checklist, in the badge's own words, with a section or step that teaches it.
+        var objectives = StretchObjectivesFor("3B", "Stretch — Vector Search Performance");
+        Assert.Equal(8, objectives.Count);
+
+        var readme = Normalise(RepoFiles.Read("part3b-vector-search/README.md"));
+        var missing = objectives.Where(o => !readme.Contains(Normalise(o))).ToList();
+
+        Assert.True(missing.Count == 0,
+            "These stretch objectives are in docs/objective-map.md but not in Part 3B's README:\n  " + string.Join("\n  ", missing));
+    }
+
+    [Fact]
+    public void No_stretch_objective_is_left_marked_not_started_once_the_stretch_is_written()
+    {
+        var map = RepoFiles.Read("docs/objective-map.md");
+        var part = Regex.Match(map, @"^## Part 3B —.*?(?=^## |\z)", RegexOptions.Singleline | RegexOptions.Multiline).Value;
+        var stretch = Regex.Match(part, @"^### Stretch — Vector Search Performance.*?(?=^### |\z)", RegexOptions.Singleline | RegexOptions.Multiline).Value;
+
+        Assert.DoesNotContain("⬜", stretch);
     }
 }

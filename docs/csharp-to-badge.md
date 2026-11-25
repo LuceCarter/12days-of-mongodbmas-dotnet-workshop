@@ -227,6 +227,21 @@ version of anything you wrote in C#.
 | Read the score | `{ $meta: "vectorSearchScore" }` | the same, in a `Project` |
 | Get a vector for some text | `POST https://api.voyageai.com/v1/embeddings` | `HttpClient` |
 
+### Stretch: reranking, shorter vectors and quantization
+
+| What you want | Shell / Atlas / REST | C# |
+|---|---|---|
+| Rerank a short list | `POST /v1/rerank` `{ query, documents, model: "rerank-3", top_k }` → `data[] { index, relevance_score }` | `HttpClient` (`VoyageReranker.RerankAsync`) |
+| Shorter vectors from Voyage | `output_dimension: 256` (also 512, 1024, 2048) | `VoyageEmbedder` with `dimensions: 256` |
+| …or shorten one you have | keep the first *n* numbers, then rescale to length 1 | `GiftFinder.Shorten` |
+| Quantize an index | `quantization: "scalar"` or `"binary"` on the vector field | the same, in the `BsonDocument` |
+| Contextualized chunk embeddings | `POST /v1/contextualizedembeddings` `{ inputs: [[chunk, chunk]], input_type, model }` | `HttpClient` |
+| Let Atlas make the vectors | an `autoEmbed` field in the vector index; query with `query: { text }` | the same, as a `BsonDocument` |
+
+A key created in **MongoDB Atlas** uses `https://ai.mongodb.com` for all of the Voyage endpoints (`VOYAGE_BASE_URL`); one
+created on voyageai.com uses `https://api.voyageai.com`. A rerank score only means something next to the others from the
+same call, and a reranker can only re-order what the first stage already found.
+
 ### Watch out: `numDimensions` is not checked when you create the index
 
 Declare the wrong number and the index builds, reports **READY**, and is `queryable`. Query it with a vector of

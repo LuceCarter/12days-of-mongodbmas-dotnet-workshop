@@ -66,4 +66,10 @@ public sealed class Toy
     [BsonElement("descriptionEmbedding")]
     [BsonIgnoreIfNull]
     public float[]? DescriptionEmbedding { get; set; }
+
+    /// <summary>A shortened copy of <see cref="DescriptionEmbedding"/>: Part 3B's stretch badge trades
+    /// some precision for a smaller, faster index. Null until you make it.</summary>
+    [BsonElement("descriptionEmbeddingShort")]
+    [BsonIgnoreIfNull]
+    public float[]? DescriptionEmbeddingShort { get; set; }
 }

@@ -26,7 +26,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using SantasWorkshop.Shared;
 
-const string Model = "voyage-3.5";
+const string Model = "voyage-4";
 const int Dimensions = 1024;
 
 // The example questions Part 3B's README and tests use. A question is only useful here if it shares
@@ -136,7 +136,12 @@ async Task<(List<float[]> Vectors, int Tokens)> EmbedAsync(IReadOnlyList<string>
     {
         // The body is Voyage's own explanation (bad key, rate limit, ...). It never contains our key.
         var detail = body.Length > 300 ? body[..300] + "…" : body;
-        throw new EmbedException($"Voyage answered {(int)response.StatusCode} {response.ReasonPhrase}: {detail}");
+        var hint = response.StatusCode == System.Net.HttpStatusCode.Forbidden
+            ? "\n\n   Is this the right host for your key? A key created on voyageai.com uses api.voyageai.com (the default);\n" +
+              "   a key created in MongoDB Atlas uses https://ai.mongodb.com. Set it with:\n" +
+              "       export VOYAGE_BASE_URL=\"https://ai.mongodb.com\""
+            : "";
+        throw new EmbedException($"Voyage answered {(int)response.StatusCode} {response.ReasonPhrase}: {detail}{hint}");
     }
 
     var data = JsonNode.Parse(body)?["data"]?.AsArray()

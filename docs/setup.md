@@ -142,9 +142,10 @@ dotnet user-secrets set "GEMINI_API_KEY" "..."
 **Which Voyage key, and which host?** A key created on **voyageai.com** works with `api.voyageai.com`. A key created in
 **MongoDB Atlas** (**AI Model APIs → Create model API key**) works with `ai.mongodb.com` instead (`us.ai.mongodb.com` or
 `eu.ai.mongodb.com` if you scoped it to a region). Send a key to the wrong host and you get a `403` saying the key
-can't access that endpoint. `tools/embed` reads `VOYAGE_BASE_URL` for this, e.g. `VOYAGE_BASE_URL=https://ai.mongodb.com`.
-MongoDB's docs disagree with themselves about free tokens for `voyage-3.5` (one page says 200 million free tokens per
-model, another lists `voyage-3.5` with none), so check the current terms before you rely on the free tier.
+can't access that endpoint. Set `VOYAGE_BASE_URL=https://ai.mongodb.com` for an Atlas key: `tools/embed`, `tools/voyage-check` and Part 3B's
+`VoyageEmbedder.FromEnvironment()` and `VoyageReranker.FromEnvironment()` all read it.
+Free tokens are documented unevenly (Voyage's FAQ says the first 200 million tokens are free for every account; MongoDB's
+billing pages list some models, such as `voyage-3.5`, with none), so check the current terms before you rely on the free tier.
 
 Part 3B also ships **pre-embedded toy data** (and pre-embedded example questions), so you can do the whole of
 Part 3B without a Voyage key. To explore those vectors in Compass or the shell, load them into the practice

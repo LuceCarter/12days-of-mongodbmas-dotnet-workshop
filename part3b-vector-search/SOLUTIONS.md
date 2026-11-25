@@ -306,7 +306,7 @@ decision: every filter field is more index to build and hold.
 ```csharp
 public async Task<float[]> EmbedAsync(string text, string inputType)
 {
-    using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint)
+    using var request = new HttpRequestMessage(HttpMethod.Post, _endpoint)
     {
         Content = new StringContent(
             new JsonObject
@@ -341,7 +341,7 @@ public async Task<float[]> EmbedAsync(string text, string inputType)
 ```
 
 **This is the missing half of the picture.** Atlas stores and searches vectors; it doesn't make them. A
-**separate embedding model**, here Voyage's `voyage-3.5`, turns text into a vector, and that is a network
+**separate embedding model**, here Voyage's `voyage-4`, turns text into a vector, and that is a network
 call to a different service. The two never talk to each other: **your code is the go-between**.
 
 The rule that follows is the most important one in vector search: **the question must be embedded by the
@@ -364,7 +364,7 @@ stand-in for the network.
 **Shell (curl):**
 ```bash
 curl https://api.voyageai.com/v1/embeddings -H "Authorization: Bearer $VOYAGE_API_KEY" -H "Content-Type: application/json" \
-  -d '{ "input": ["a rainy-day game"], "model": "voyage-3.5", "input_type": "query", "output_dimension": 1024 }'
+  -d '{ "input": ["a rainy-day game"], "model": "voyage-4", "input_type": "query", "output_dimension": 1024 }'
 ```
 </details>
 
@@ -392,6 +392,210 @@ embedding model, the nearest-neighbour maths came from Atlas, and the only thing
 vector. That is why the same few lines work for toys, for recipes and for support tickets.
 
 The question is embedded with `"query"`, the toys were embedded with `"document"` (Step 7).
+</details>
+
+---
+
+# Stretch — Vector Search Performance
+
+<details>
+<summary><b>Stretch S1 — RerankAsync</b> (reranking, and when to use it; using Voyage reranking models)</summary>
+
+```csharp
+public async Task<List<Reranked>> RerankAsync(string query, IReadOnlyList<string> documents, int topK)
+{
+    using var request = new HttpRequestMessage(HttpMethod.Post, _endpoint)
+    {
+        Content = new StringContent(
+            new JsonObject
+            {
+                ["query"] = query,
+                ["documents"] = new JsonArray(documents.Select(d => (JsonNode)JsonValue.Create(d)!).ToArray()),
+                ["model"] = _model,
+                ["top_k"] = topK,
+            }.ToJsonString(),
+            Encoding.UTF8,
+            "application/json"),
+    };
+    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+
+    using var response = await _http.SendAsync(request);
+    var body = await response.Content.ReadAsStringAsync();
+
+    if (!response.IsSuccessStatusCode)
+        throw new HttpRequestException(
+            $"Voyage answered {(int)response.StatusCode} {response.ReasonPhrase}: {body}", null, response.StatusCode);
+
+    return JsonNode.Parse(body)!["data"]!.AsArray()
+        .Select(row => new Reranked(row!["index"]!.GetValue<int>(), row["relevance_score"]!.GetValue<double>()))
+        .ToList();
+}
+```
+
+A reranker is a different kind of model from an embedding model, and the difference is the whole point.
+An **embedding** model reads each text **on its own** and turns it into a vector; the question and each
+candidate only meet afterwards, as two vectors being compared. A **reranker** is a **cross-encoder**: it reads the
+question and one candidate **together** and judges how well *that* text answers *that* question.
+Reading them together is more accurate and much more expensive, because it has to be redone for every candidate
+and every question, so you never run it over a whole collection. You run it over the few dozen candidates a cheap
+first stage already picked.
+
+What comes back is a list of `{ index, relevance_score }`, **most relevant first**. The `index` is the
+position of the document **in the list you sent**, which is why S2 has to keep the candidates in order.
+
+**The score is only meaningful next to the others from the same call.** Don't compare a score from one query with
+a score from another, and don't set a threshold from one example.
+
+The request limits are worth knowing: at most **1,000 documents** per request, and a cap on total tokens, so a
+reranker is a *short-list* tool by design.
+
+**Which model?** `rerank-3` is the highest-accuracy current model; `rerank-3-lite` is described as fast and
+cost-effective for latency-sensitive uses. The same trade as the embedding models: quality against speed and cost.
+
+**When to rerank, and when not to.** Rerank when the *order within the top few* matters and the first stage's
+order isn't good enough: a question the embeddings only half understand, answers a person will read one by one,
+or a RAG prompt where only a few chunks fit. Don't when the first stage is already good enough for the task, when
+the extra call's latency or cost matters more than a better order, or when the candidate list is huge (rerank the
+top handful, never the collection). The docs state the two-stage pattern but give no "when not" guidance, so
+that part is reasoning, not a quotation: measure on your own questions.
+
+**Shell (curl):**
+```bash
+curl https://api.voyageai.com/v1/rerank -H "Authorization: Bearer $VOYAGE_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "query": "something calming for bedtime", "documents": ["...", "..."], "model": "rerank-3", "top_k": 3 }'
+```
+</details>
+
+<details>
+<summary><b>Stretch S2 — FindThenRerankAsync</b> (reranking, and when to use it; using Voyage reranking models)</summary>
+
+```csharp
+public async Task<List<ToyHit>> FindThenRerankAsync(string question, int candidates, int keep)
+{
+    var embedder = _embedder
+        ?? throw new InvalidOperationException("FindThenRerankAsync needs an embedder to turn the question into a vector.");
+    var reranker = _reranker
+        ?? throw new InvalidOperationException("FindThenRerankAsync needs a reranker to put the candidates in order.");
+
+    // Stage one: fast, approximate, and wide.
+    var vector = await embedder.EmbedAsync(question, "query");
+    var firstStage = await FindSimilarAsync(vector, candidates);
+
+    // The reranker reads text, so give it each candidate's description, in the order stage one returned them:
+    // it will say which one it means by that position.
+    var names = firstStage.Select(h => h.Name).ToList();
+    var descriptionOf = (await _toys.Find(t => names.Contains(t.Name)).ToListAsync())
+        .ToDictionary(t => t.Name, t => t.Description);
+    var documents = names.Select(n => descriptionOf[n]).ToList();
+
+    // Stage two: slow, accurate, and narrow.
+    var ranked = await reranker.RerankAsync(question, documents, keep);
+
+    return ranked.Select(r => new ToyHit(names[r.Index], r.RelevanceScore)).ToList();
+}
+```
+
+**Wide, then narrow.** Stage one casts a net (`candidates`, say 20 to 50) and stage two chooses (`keep`, say 3 to 5).
+The two numbers are the whole design:
+
+- `candidates` too small and the right answer never reaches the reranker, which can't fix what it never sees.
+  The reranker can only reorder, never recover a miss.
+- `candidates` too large and you pay for reading texts that had no chance.
+
+**The map back.** The reranker returns *positions*, so the code keeps `names` in stage-one order and maps each
+`Index` back through it. Getting that wrong is the classic bug: the order is right and the names are wrong.
+
+Note the score changes meaning: it started as a vector similarity and ends as a reranker's relevance. They are
+different scales, so never mix them in one list.
+</details>
+
+<details>
+<summary><b>Stretch S3 — Shorten</b> (effects of dimensionality on quality, latency and cost)</summary>
+
+```csharp
+public static float[] Shorten(float[] vector, int dimensions)
+{
+    if (dimensions < 1 || dimensions > vector.Length)
+        throw new ArgumentOutOfRangeException(nameof(dimensions),
+            $"A {vector.Length}-dimension vector can't be shortened to {dimensions}.");
+
+    var head = vector.Take(dimensions).ToArray();
+    var magnitude = Math.Sqrt(head.Sum(x => (double)x * x));
+
+    return head.Select(x => (float)(x / magnitude)).ToArray();
+}
+```
+
+Cutting a vector off after *n* numbers normally destroys it. These aren't normal vectors: Voyage trains its models with
+**Matryoshka** learning, so the first numbers carry the most important information and the vector is a **nested
+family**: the first 256 numbers are themselves a valid 256-number embedding, the first 512 a valid 512 one, and so on,
+like nested dolls. The cost of cutting is "a slight loss of retrieval quality", in the docs' words.
+
+**Why renormalise?** Chopping numbers off makes the arrow shorter. Cosine similarity ignores length, but dot
+product doesn't, and Atlas expects unit vectors for it. Scaling back to length 1 keeps every similarity honest.
+(`[3, 4, 12]` cut to two numbers is `[3, 4]`, length 5, and dividing by 5 gives `[0.6, 0.8]`.)
+
+**What it buys.** The docs say storage and search costs "scale linearly in the embedding dimensionality and
+precision". A quarter of the dimensions is a quarter of the numbers to store, to compare, and to send over the
+network, for every vector. The cost is a little accuracy, and it is **a trade, not a win**: for a collection of 34
+toys it makes no visible difference to the answers. Across millions of vectors the saving adds up to something you
+can feel in memory, in latency and in the bill.
+
+**You can ask Voyage for a short vector directly** (`output_dimension: 256`), and `tools/voyage-check` compares that
+with truncating a 1024-number vector, so you can see whether the two agree.
+</details>
+
+<details>
+<summary><b>Stretch S4 — CreateCompactIndexAsync</b> (effects of dimensionality on quality, latency and cost)</summary>
+
+```csharp
+public async Task CreateCompactIndexAsync(string indexName, string path, int dimensions, string quantization = "none")
+{
+    var definition = new BsonDocument("fields", new BsonArray
+    {
+        new BsonDocument
+        {
+            { "type", "vector" },
+            { "path", path },
+            { "numDimensions", dimensions },
+            { "similarity", "cosine" },
+            { "quantization", quantization },
+        },
+    });
+
+    await _toys.SearchIndexes.CreateOneAsync(
+        new CreateSearchIndexModel(indexName, SearchIndexType.VectorSearch, definition));
+
+    await WaitUntilQueryableAsync(indexName);
+}
+```
+
+Two ways to make an index smaller, and this one method does both:
+
+| Way | How | What each number costs |
+|---|---|---|
+| **fewer dimensions** | `path` = the short vectors, `numDimensions` = 256 | 256 numbers instead of 1024 |
+| **quantization** | `quantization: "scalar"` or `"binary"` | 1 byte, or 1 *bit*, instead of the 4 bytes of a float |
+
+They combine. Compare a float32 vector of 1024 numbers (**4,096 bytes**) with the same vector scalar-quantized (**1,024 bytes**,
+the docs say 4x less) or binary-quantized (**128 bytes**, 32x less), or a 256-number one (1,024 bytes as floats, **256** as scalar,
+**32** as binary).
+
+**The dimensions trap applies to the short index too.** `numDimensions` must be the length of what's stored *and* of what
+you query with: a 1024-number question against the 256-number index gets the same
+`indexed with 256 dimensions but queried with 1024` error as in Step 4. Shorten the question the same way you shortened the toys.
+
+**Binary** needs `numDimensions` to be a multiple of 8, because it packs eight numbers into a byte (1024 and 256 both are).
+
+**What it costs in accuracy.** Quantizing throws away precision, so scores shift slightly (the night light scored 0.7715
+plain and 0.7711 under scalar for the bedtime question) and, on a big collection, the order of near-ties can change.
+Whether that matters is something to measure against *your* questions, not assume.
+
+**Shell:**
+```js
+db.toys.createSearchIndex("toys-compact", "vectorSearch", { fields: [
+  { type: "vector", path: "descriptionEmbedding", numDimensions: 1024, similarity: "cosine", quantization: "scalar" } ] })
+```
 </details>
 
 ---

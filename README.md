@@ -80,6 +80,7 @@ docker-compose.yml       MongoDB with Search and Vector Search, for local work
 tools/doctor/            Environment check — run this first, and whenever things break
 tools/seed/              Loads practice data into the database, for exploring in Compass and the shell
 tools/embed/             Generates the Part 3B vectors with a Voyage key (maintainers only: they are already committed)
+tools/voyage-check/      Checks the Voyage claims Part 3B makes against the real API (maintainers only)
 tools/site-routes/       Lists every URL the landing page serves (used by the deploy)
 src/Shared/              The models (Toy, Order, LedgerEntry), seed data and connection helpers
 src/Content/             Renders this repo's markdown for the landing page (and its tests)

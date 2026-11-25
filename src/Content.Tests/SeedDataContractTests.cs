@@ -332,8 +332,8 @@ public sealed class SeedDataContractTests
         var toys = ReadVectors(ToyVectorsPath);
         var questions = ReadVectors(QuestionVectorsPath);
 
-        Assert.Equal("voyage-3.5", toys.Model);
-        Assert.Equal("voyage-3.5", questions.Model);
+        Assert.Equal("voyage-4", toys.Model);
+        Assert.Equal("voyage-4", questions.Model);
         Assert.Equal(1024, toys.Dimensions);
         Assert.Equal(1024, questions.Dimensions);
         Assert.Equal("document", toys.InputType);

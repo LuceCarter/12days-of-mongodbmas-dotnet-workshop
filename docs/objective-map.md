@@ -192,10 +192,11 @@ The brief lists no stretch badge for Part 3A.
 ## Part 3B — Finding the Perfect Gift: Vector Search
 **Anchor badge:** Vector Search Fundamentals · **Level:** Intermediate · **Release:** Dec 13
 
-**Status: ✅ complete.** 6/6 objectives covered, 44 tests, all red on the starter code and green on the published
-solutions. Verified 2026-11-24 against **real `voyage-3.5` vectors**, generated with `tools/embed`. Two things are
-🖐️ rather than tested: the Atlas UI half of objective 3, and the Voyage call (Step 7), which is tested only through
-a stand-in for the network.
+**Status: ✅ complete.** 6/6 objectives covered, 45 tests for the badge and 19 more for the stretch (64 in all), all red
+on the starter code and green on the published solutions. Verified 2026-11-24 against **real vectors**, generated with
+`tools/embed`. Two things are 🖐️ rather than tested: the Atlas UI half of objective 3, and the Voyage calls (Step 7 and
+Stretch S1), which are tested only through a stand-in for the network (and checked against the real API by
+`tools/voyage-check`).
 
 | Objective | Step | Test | Status |
 |---|---|---|---|
@@ -206,13 +207,14 @@ a stand-in for the network.
 | Write a `$vectorSearch` aggregation query | Steps 5, 6, 8 · `FindSimilarAsync`, `GiftsForAgeAsync`, `FindGiftsAsync` | `Step05_MatchesTheBruteForceAnswer`, `…_AToyIsItsOwnNearestNeighbour`, `…_TheScoreIsTheRescaledCosine`, `…_HonoursTheCount`, `Step06_OnlyReturnsSuitableToys`, `…_FilteringDoesNotChangeAScore` | ✅ |
 | Understand how prefiltering affects performance | Step 6 · `GiftsForAgeAsync` | `Step06_APreFilterKeepsLookingUntilItHasEnough`, `…_OnlyReturnsSuitableToys`, `…_NothingMatchesTheFilter` | ✅ |
 
-> **Meaning is tested on the real vectors.** `Step08_MeaningTests` asks each example question and checks the
-> right toy comes first: bedtime → Triceratops Night Light, palaeontologist → Dinosaur Dig Kit, rainy-day game →
-> Snakes and Ladders, mess and art → Finger Painting Set, night sky → Constellation Projector, small baby →
-> Stegosaurus Soft Toy, build with my hands → Wooden Tool Bench. (An eighth question, *a present for someone who
-> loves the outdoors*, finds a torch, a glider and a telescope: no clear winner, so it's used in the README as an
-> honest example of vector search being good, not magic, and has no test.) They assert the **order**, never the exact
-> scores, so a different model changes numbers, not the idea.
+> **Meaning is tested on the real vectors.** `Step08_MeaningTests` asks each example question against the shipped `voyage-4`
+> vectors. Five questions must put one toy first: palaeontologist → Dinosaur Dig Kit, rainy-day game → Snakes and Ladders,
+> mess and art → Finger Painting Set, night sky → Constellation Projector, small baby → Stegosaurus Soft Toy. Two are
+> close calls where the toy we had in mind need only be in the top three: bedtime → Triceratops Night Light (the soft
+> stegosaurus is first, cosine 0.431 to 0.406) and build with my hands → Wooden Tool Bench (the Moon Lander Model Kit is first,
+> cosine 0.473 to 0.470). That is the honest result of the model, and bedtime is the example the rerank stretch improves on. (An
+> eighth question, *a present for someone who loves the outdoors*, finds a torch, a kite and a telescope: no clear winner,
+> so it has no test.) They assert the **order**, never the exact scores, so a different model changes numbers, not the idea.
 >
 > **The Atlas UI half of objective 3** is 🖐️, as in Part 3A: the path is the same (**Search & Vector Search** →
 > **Create Search Index**, choosing the **Vector Search** type), but the *Vector Search* labels were not
@@ -245,7 +247,7 @@ a stand-in for the network.
 | Time for a 1024-dim vector index over 34 documents to be `queryable` | well under a second |
 
 **Tool facts relied on (Voyage docs):** `POST https://api.voyageai.com/v1/embeddings`, `Authorization: Bearer`,
-`input_type` ∈ {`null`, `query`, `document`}, `voyage-3.5` default **1024** with `output_dimension` ∈ {2048, 1024,
+`input_type` ∈ {`null`, `query`, `document`}, `voyage-4` default **1024** with `output_dimension` ∈ {2048, 1024,
 512, 256}, response `data[].embedding` / `data[].index`.
 
 **Measured on the real vectors (2026-11-24):** every vector from `tools/embed` has a norm of **1.0000** (min and max),
@@ -253,36 +255,27 @@ so cosine and dot product rank identically, and the README says so as a measurem
 search agree for the bedtime question over 34 toys. Scalar and binary quantization keep the order (night light 0.7715 plain
 and binary, 0.7711 scalar). Pre-filter vs post-filter with the Pocket Telescope's vector for age 3, five wanted: **5 vs 1**.
 
-**Not stated in the docs, so not claimed:** that Voyage vectors are normalised (measured, not promised), which similarity
-Voyage recommends. **Documented inconsistently:** free tokens for `voyage-3.5` (the rate-limits page says 200 million per
-model; the billing page lists `voyage-3.5` under older models with none). **Atlas-created keys use a different host:**
+**Voyage's FAQ states** that its embeddings are "normalized to length 1" (so cosine and dot product rank identically); that
+was also measured. (Earlier notes here said the docs were silent on it: that was wrong, the statement is in the FAQ, not on the
+embeddings page.) **Documented inconsistently:** free tokens (Voyage's FAQ: the first 200 million are free for every account;
+MongoDB's billing pages list some older models, e.g. `voyage-3.5`, with none). **Atlas-created keys use a different host:**
 `ai.mongodb.com`, not `api.voyageai.com` (`tools/embed` reads `VOYAGE_BASE_URL`; found when the first real run got a 403).
 
 ### Stretch — Vector Search Performance (not assessed by the anchor badge)
 
-Taught only in Part 3B's **Level up**, and only in part. Marked honestly: the stretch badge is not covered
-by tests, and several of its objectives are a paragraph of thinking, not a built step.
+A separate section of Part 3B's README with four code steps (S1 to S4, 19 tests) and sourced concept sections.
+Legend: 🛠️ built and tested · 📖 taught from the documentation, **not run here** · 🖐️ needs an Atlas cluster, and nobody has run it.
 
 | Objective | Where | Status |
 |---|---|---|
-| How embeddings are created (generate with Voyage AI) | Step 7 (`EmbedAsync`) and `tools/embed`; the call is tested through a stand-in only | 🚧 taught, never run against the live API |
-| Compare database options for vector search | — | ⬜ not covered |
-| Reranking, and when to use it | Level up, "Rank again": a paragraph, not built | 🚧 concept only |
-| Choosing embedding models by workload / data type / quality / latency / cost | — | ⬜ not covered |
-| `voyage-context-3` for chunking challenges | — | ⬜ not covered (chunking arrives with Part 4A) |
-| Effects of dimensionality on quality, latency and cost | Level up: "Fewer dimensions" (needs a Voyage key) and "Compress the vectors" (scalar/binary quantization, run locally) | 🚧 quantization run; fewer-dimensions needs a key and was not run |
-| API-generated vs. database-managed auto-embeddings | Level up, "Who makes the vectors?": questions to think through | 🚧 concept only |
-| Using Voyage reranking models | — | ⬜ not built: the rerank API wasn't read or run |
-
----|---|---|
-| How embeddings are created (generate with Voyage AI) | — | ⬜ |
-| Compare database options for vector search | — | ⬜ |
-| Reranking, and when to use it | — | ⬜ |
-| Choosing embedding models by workload / data type / quality / latency / cost | — | ⬜ |
-| `voyage-context-3` for chunking challenges | — | ⬜ |
-| Effects of dimensionality on quality, latency and cost | — | ⬜ |
-| API-generated vs. database-managed auto-embeddings | — | ⬜ |
-| Using Voyage reranking models | — | ⬜ |
+| How embeddings are created (generate with Voyage AI) | Step 7 (`EmbedAsync`) and `tools/embed`, which made the shipped vectors against the real API | 🛠️ Step 7 tested through a stand-in; `tools/embed` ran for real |
+| Compare database options for vector search | README: three families compared by what each asks of you. Design reasoning: nothing was measured | 📖 |
+| Reranking, and when to use it | S1 `RerankAsync`, S2 `FindThenRerankAsync` (two-stage) | 🛠️ tested through a stand-in; "when not to" is reasoning, as Voyage's docs give none |
+| Choosing embedding models by workload / data type / quality / latency / cost | README: Voyage's current model table, its own advice, and five questions to decide by. Only `voyage-4` was run | 📖 |
+| `voyage-context-3` for chunking challenges | README: the problem, the request shape, the limits, when (not) to use it. `voyage-context-4` is the current model | 📖 one real call, by `tools/voyage-check` |
+| Effects of dimensionality on quality, latency and cost | S3 `Shorten` (Matryoshka truncation, measured on the toys), S4 `CreateCompactIndexAsync` (256 dimensions, scalar, binary) | 🛠️ quality measured; **latency not measured** |
+| API-generated vs. database-managed auto-embeddings | README: `autoEmbed` against the approach in this part, from MongoDB's docs | 📖 🖐️ unrun: needs Atlas (the docs don't say whether Atlas Local supports it) |
+| Using Voyage reranking models | S1 (`rerank-3`, `rerank-3-lite`) | 🛠️ tested through a stand-in; checked for real by `tools/voyage-check` |
 
 ---
 
