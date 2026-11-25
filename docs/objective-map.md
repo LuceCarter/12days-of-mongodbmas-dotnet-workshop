@@ -316,19 +316,34 @@ vectors** made by `tools/embed --handbook`: three red/green cycles and twelve co
 ---
 
 ## Part 4B — Santa's Elf Assistant: Agents
-**Anchor badge:** AI Agents with MongoDB · **Release:** Dec 17
+**Anchor badge:** AI Agents with MongoDB · **Level:** Intermediate · **Release:** Dec 17
+
+**Status: ✅ complete.** 7/7 objectives have a step, tests and a checklist line. 76 tests: 70 for the steps, all red on the starter and green on the
+published solutions, plus 6 on pre-written code (the `ElfLlm` routing and the session's conversation id), green from the start. Verified 2026-11-25: three red/green
+cycles and ten consecutive green runs on Atlas Local 8.0.15, with a scripted stand-in for the language model. Three objectives include a *definition* that a test can only partly prove (🖐️).
+
+> The badges may be framed around other frameworks (Python, LangGraph). Part 4B includes a short conceptual bridge (in the README's *The cycle*): the agent loop
+> is a graph with a *model* node, a *tools* node and an edge back, which is the shape LangGraph draws explicitly and Microsoft Agent Framework runs as plain code.
+> **Long-term memory is conceptual only in the objectives**, so it is explained, with a sketch of how to build it, and not built.
 
 | Objective | Step | Test | Status |
 |---|---|---|---|
-| Define an agent's reasoning, tools and memory | — | — | ⬜ |
-| Plan an agent's tasks and required data | — | — | ⬜ |
-| Retrieval tools | — | — | ⬜ |
-| Tools in general, and LLM function calling | — | — | ⬜ |
-| Cyclical graphs | — | — | ⬜ |
-| Short- vs. long-term memory | — | — | ⬜ |
-| Implement short-term agent memory with MongoDB | — | — | ⬜ |
+| Define an agent's reasoning, tools and memory | Steps 1, 6 · `Build`, `CreateAgent` (and "What is an agent?") | `Step01_NamesEveryTool`, `…_OnlyNamesTheToolsItWasGiven`, `…_SaysWhoItIs`, `Step06_ItAnswers`, `…_TheInstructionsReachTheModel` | 🖐️ the definition is read, not tested; the tests prove the three parts exist and are wired |
+| Plan an agent's tasks and required data | Step 1 · `Build` (and "Planning an agent: tasks first, then data") | `Step01_SaysWhenToUseEachTool`, `…_AsksInsteadOfGuessing` | 🖐️ the plan (tasks, data, tools) is in the README's table; the tests prove the instructions carry it |
+| Retrieval tools | Step 6 · `CreateAgent` | `Step06_TheHandbookIsATool`, `…_TheHandbookIsNotSearchedEveryTurn`, `…_TheModelCanSearchTheHandbook`, `…_NoHandbookNoHandbookTool` | ✅ |
+| Tools in general, and LLM function calling | Steps 2–5 · `FindToysAsync`, `GetOrderStatusAsync`, `CreateTools`, `RunAsync` | `Step02_ByCategory`, `…_ByAge`, `…_InStockOnly`, `…_Combined`, `…_ASillyLimit`, `Step03_FindsAnOrder`, `…_ForgivesTheNumbersFormat`, `…_NotFoundIsAResult`, `Step04_TwoNamedTools`, `…_ToolsAreDescribed`, `…_TheSchemaDescribesTheParameters`, `…_WhatIsRequired`, `…_AToolRuns`, `Step05_OneTurnOfTheCycle`, `…_SeveralCallsAtOnce`, `…_ResultsPointAtTheirCalls`, `…_AnUnknownTool`, `…_AToolThatThrows`, `…_ToolsAreOfferedEveryTime` | ✅ |
+| Cyclical graphs | Step 5 · `RunAsync` (and "The cycle") | `Step05_TheCycleRepeats`, `…_TheMessagesGrow`, `…_ACycleNeedsALimit`, `…_TheLastTurnCounts`, `Step06_TheFrameworkRunsTheCycle` | ✅ the cycle is written by hand, then run by the framework |
+| Short- vs. long-term memory | Step 8 · `TrimToRecent` (and "Memory: short-term and long-term") | `Step08_EverythingFits`, `…_ACleanCut`, `…_NeverStartsMidTurn`, `…_NoWholeTurnFits`, `…_RefusesAnImpossibleWindow` | 🖐️ short-term is built and tested; **long-term is explained, not built**, as the brief asks |
+| Implement short-term agent memory with MongoDB | Steps 7, 9 · `MongoChatStore`, `RecallAsync`, `RememberAsync` | `Step07_RoundTrip`, `…_ToolCallsSurvive`, `…_AppendsAccumulate`, `…_ConversationsAreSeparate`, `…_AUniqueIndexOnTheConversation`, `…_ATtlIndexForgets`, `Step09_TheAgentRemembers`, `…_TheWholeTurnIsStored`, `…_MemorySurvivesARestart`, `…_ConversationsCanBeSharedOrKeptApart`, `…_TheWindowReachesTheModel`, `…_AFailedRunIsNotRemembered` | ✅ |
 
-> The badges may be framed around other frameworks (Python, LangGraph). Part 4B needs
-> a short conceptual bridge explaining how Microsoft Agent Framework handles the agent
-> loop. **Long-term memory is conceptual only in the objectives** — it stays an
-> optional bonus step.
+### What was run, and what wasn't
+
+- **Run on Atlas Local 8.0.15, with a scripted stand-in for the language model and a stand-in for the embedding model:** every test. The retrieval tool is tested against the real `voyage-4` handbook vectors.
+- **Run against Agent Framework 1.28.0 for real, in a throwaway project, before any of the part was written:** a tool call costs **two** model calls (the framework runs the cycle); a `ChatHistoryProvider` is given only the *new* user message and the *whole* tool chain of the response (call, result, answer) to store, and on the next turn hands the whole stored exchange back; the agent sends its instructions as
+  `ChatOptions.Instructions`, not as a message. The first draft of the provider overrode the wrong hooks and the model was sent no messages at all: the real hooks are `ProvideChatHistoryAsync` and `StoreChatHistoryAsync`.
+- **Run end to end with the solved Starter against mock Voyage and Gemini servers:** `tools/elf-chat`. A first run called `get_order_status` and stored 4 messages in MongoDB; a **new process** with the same `--conversation` picked up those 4 messages and answered a follow-up from memory.
+- **Not run:** `tools/elf-chat` against a **real** language model (nothing here has been asked of a real model with these tools and instructions, so whether a real model follows the "ask, never guess" rule is untested: Step 1's tests prove the rule is in the instructions, not that a model obeys it); the real `search_elf_handbook` tool through a real model;
+  anything on Atlas M0; timings (the "about two hours" is an estimate). `llm-check` did show that Gemini on Vertex AI makes a tool call when asked.
+- **Tests avoided on purpose:** nothing asserts what a real model *says*. The scripted model makes the tests deterministic, which means they prove what **your code does with** a model's reply, not how a model behaves.
+
+---

@@ -1126,3 +1126,50 @@ asks for `Microsoft.Extensions.AI` 10.11.0 and mixing majors is asking for a run
 - **Google AI Studio** (above), **Atlas M0**, **the Atlas UI** for creating the index, and **timings** ("about an hour and a half" is an estimate).
 - **The bar (0.67)** rests on ten questions.
 - The README's claim that real systems often chunk by tokens, sentences or document structure, and that 10–20% overlap is a common starting point, is general practice, not something measured here.
+
+---
+
+## 2026-11-25 — Part 4B: Santa's Elf Assistant: Agents
+
+**Written and verified against Agent Framework 1.28.0.** `"Available"` stays `false`: the badge URL is still a placeholder.
+
+### Scope, as agreed with Luce
+
+- **A hand-written tool loop first, then the framework's** (Luce's choice). Objective 5 is "cyclical graphs", and writing the cycle (Step 5) makes it something learners build and test, with the framework's `ChatClientAgent` in Step 6.
+- **Long-term memory is concept only** (Luce's choice, matching the brief): a README section and a sketch in SOLUTIONS.md, with a Level up idea. Not built.
+- **Nine steps, 76 tests**: Step 1 instructions; 2 `find_toys`; 3 `get_order_status`; 4 `AIFunctionFactory`; 5 the loop; 6 `ChatClientAgent` with the handbook as an on-demand retrieval tool; 7 a MongoDB chat store (with unique and TTL indexes); 8 a window that never starts mid-turn; 9 a `ChatHistoryProvider`.
+  70 tests are red on the starter; 6 test already-written code (the `ElfLlm` routing, copied from 4A with its tests, and the session's conversation id) and are green from the start.
+
+### Found by running Agent Framework 1.28.0 before writing anything (a throwaway project)
+
+- A tool call costs **two model calls**: the framework runs the cycle. The agent sends its instructions in **`ChatOptions.Instructions`**, not as a message.
+- **`ChatHistoryProvider`'s real extension points are `ProvideChatHistoryAsync` and `StoreChatHistoryAsync`.** My first draft overrode the lower-level `InvokingCoreAsync`/`InvokedCoreAsync`, which return the *whole* list the model is sent, so the model received **no messages at all**.
+- The store hook is given the **new user message only** as the request, and the **whole tool chain** (assistant call, tool result, answer) as the response; on the next turn the provider hands back the whole stored exchange. So tool calls must be stored as full JSON (`AIJsonUtilities.DefaultOptions`), not as text.
+- The conversation id is kept in the **session's state bag**, which serialises with the session: that is how a new process, with a restored session, picks the conversation up.
+
+### Bugs the tests found in my own work
+
+- **`HandbookSearch` (pre-written) could not read its own results.** Its projection asked for fields its row class didn't have, so the driver threw a `FormatException`, which the framework reported to the model as "Function failed." Found only because a test drives the handbook tool end to end. Fixed.
+- **Two tests passed on the bare starter:** one tested only pre-written code (relabelled "Already written"), and "a failed run remembers nothing" passed by accident because the stub threw. It now first stores a successful turn, so it can't.
+- **`apply-solutions.py` assumed one method per solution block**, so Steps 7 and 9 (several small methods each) were duplicated and didn't compile. The script now splits a block with several column-0 `public` methods; every single-method block is unchanged, which was checked by applying Parts 1, 2, 3A, 3B and 4A again (12, 9, 10, 12, 9 solutions, as before). **CI uses this script**, so this is a change to the proof for every part.
+- A test assumed three toys suit a one-year-old; two do. Now computed from the data.
+
+### Design notes
+
+- **The Starter is independent of 4A**: it carries copies of `IEmbedder`, `VoyageEmbedder` and `ElfLlm` (with `ElfLlm`'s five tests) and a finished `HandbookSearch`. The duplication is deliberate, for the same reason as 4A's copy of the 3B embedder.
+- **Tools return results, never throw**, for "not found", unknown tools and failing tools: a model can read a result. A **turn cap** is enforced by the hand-written loop (and tested at its boundary).
+- **The window may only start at a user message**, so a tool result is never separated from its call. It may keep fewer than asked, never more.
+- **`tools/elf-chat`** runs the learner's own agent with a real model and MongoDB memory; keys come from environment variables or `dotnet user-secrets` (verified for `tools/ask`, same code here).
+
+### Run end to end (mock services)
+
+With the solved Starter, against mock Voyage and Gemini servers: a first run called `get_order_status` and stored 4 messages in MongoDB; a **new process** with the same `--conversation` picked up those 4 and answered "Who is it for?" from memory. Test data was dropped afterwards.
+
+### Not verified, and said so
+
+- **No real language model has been asked anything with these tools and instructions.** The tests prove what the *code* does with a scripted model's replies. Whether a real model follows "ask, never guess", picks the right tool, or handles a long conversation is untested. (`llm-check` did show that Gemini on Vertex AI makes a tool call when asked.)
+- **`tools/elf-chat` against real keys**, the real `search_elf_handbook` tool through a real model, **Atlas M0**, and **timings** ("about two hours" is an estimate).
+- The README's claims about **LangGraph** are a conceptual mapping (agent node, tools node, conditional edge) from general knowledge, not checked against its current documentation; the part's own text says "the badge *may* describe it this way".
+- Agent Framework **approval flows** for tools that change things were seen only as option names; the README says they exist and weren't tried.
+- **MongoDB's own `MongoDB.AgentFramework` connector** was not used (unpublished and version-locked, see the plan); this part's `ChatHistoryProvider` is hand-written and about 30 lines.
+

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Part4B.Tests</RootNamespace>
+
+    <!--
+      xUnit v3 runs on the Microsoft Testing Platform, which the .NET 10 SDK
+      requires (VSTest is no longer supported here). The test project is a real
+      executable, and `dotnet test` needs the opt-in below.
+    -->
+    <OutputType>Exe</OutputType>
+
+    <!--
+      xUnit1051 asks us to thread TestContext.Current.CancellationToken through every
+      driver call. These tests run in a few seconds against a local database, so the
+      responsiveness it buys isn't worth the clutter — and the tests double as worked
+      examples that learners read.
+    -->
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Starter\Part4B.Starter.csproj" />
+    <ProjectReference Include="..\..\src\Shared\SantasWorkshop.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

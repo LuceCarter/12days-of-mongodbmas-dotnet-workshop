@@ -124,7 +124,7 @@ them yet. They are only for **trying the real thing** (`tools/ask`) and for rege
 |---|---|---|---|
 | `VOYAGE_API_KEY` | calling Voyage for real: Part 3B Step 7, Part 4A's `tools/ask` | [Voyage AI](https://www.mongodb.com/docs/voyageai/) | See the note below |
 | `VOYAGE_BASE_URL` | only if your Voyage key was **created in MongoDB Atlas**: set it to `https://ai.mongodb.com` | n/a | n/a |
-| `GEMINI_API_KEY` | Part 4A's `tools/ask`, Part 4B: the language model | [Google AI Studio](https://aistudio.google.com/apikey) | Its free tier needs no card, but see the note below |
+| `GEMINI_API_KEY` | Part 4A's `tools/ask` and Part 4B's `tools/elf-chat`: the language model | [Google AI Studio](https://aistudio.google.com/apikey) | Its free tier needs no card, but see the note below |
 | `GOOGLE_CLOUD_PROJECT` | **instead of** `GEMINI_API_KEY`, if you can't create an AI Studio key (an organisation can block them): use Gemini on Google Cloud (Vertex AI). Needs `gcloud auth login`, and **billing enabled** on the project | [Google Cloud](https://cloud.google.com/sdk/docs/install) | Not free: it is billed to your project |
 | `GOOGLE_CLOUD_LOCATION` | optional: the Vertex AI location (defaults to `global`; a model can be "not found" in one location and fine in another) | n/a | n/a |
 | `GEMINI_MODEL` | optional: which Gemini model to ask (a default is set in `ElfLlm.cs`) | n/a | n/a |
@@ -143,7 +143,7 @@ dotnet user-secrets set "GEMINI_API_KEY" "..." --project tools/ask
 dotnet user-secrets set "VOYAGE_API_KEY" "..." --project tools/ask
 ```
 
-(`tools/ask` reads both places and an environment variable wins. The other tools read environment variables only.)
+(`tools/ask` and `tools/elf-chat` read both places, and an environment variable wins. Use `--project tools/elf-chat` with `dotnet user-secrets` for the second. The other tools read environment variables only.)
 
 **No AI Studio key? Use Google Cloud.** Some organisations block creating Gemini API keys. Gemini is also available through Google Cloud's **Vertex AI**, and
 the code supports it through its OpenAI-compatible endpoint:
@@ -151,7 +151,8 @@ the code supports it through its OpenAI-compatible endpoint:
 ```bash
 gcloud auth login
 export GOOGLE_CLOUD_PROJECT="your-project-id"       # billing must be enabled on this project
-dotnet run --project tools/ask -- "How do I tell whether a toy part is a small part?"
+dotnet run --project tools/ask -- "How do I tell whether a toy part is a small part?"     # Part 4A
+dotnet run --project tools/elf-chat                                                          # Part 4B
 ```
 
 It gets a short-lived access token from `gcloud auth print-access-token` (or from `GOOGLE_CLOUD_ACCESS_TOKEN` if you set it), so there is no key to store. Vertex names models with a

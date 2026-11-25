@@ -62,7 +62,7 @@ the assessment is likely to use.
 - The [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/products/docker-desktop/), **or** a free
   [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) account
-- Part 4A needs **no keys** for the exercises. To try the real thing at the end, free keys for Voyage AI and Google Gemini (see [docs/setup.md](docs/setup.md))
+- Parts 4A and 4B need **no keys** for the exercises. To try the real thing at the end, free keys for Voyage AI and Google Gemini (see [docs/setup.md](docs/setup.md))
 
 Quickest check that everything works:
 
@@ -80,6 +80,7 @@ docker-compose.yml       MongoDB with Search and Vector Search, for local work
 tools/doctor/            Environment check — run this first, and whenever things break
 tools/seed/              Loads practice data into the database, for exploring in Compass and the shell
 tools/ask/               Asks the Part 4A Elf Assistant a question for real, with your code and your own keys (a Level up)
+tools/elf-chat/          Chats with the Part 4B agent for real, with your code, your own keys, and a memory kept in MongoDB (a Level up)
 tools/embed/             Generates the Part 3B and 4A vectors with a Voyage key (maintainers only: they are already committed)
 tools/voyage-check/      Checks the Voyage claims Part 3B makes against the real API (maintainers only)
 tools/llm-check/         Checks the Gemini claims Part 4 makes against the real API (maintainers only)
@@ -91,6 +92,7 @@ part2-ledger/            Part 2: README, Starter/, Tests/, SOLUTIONS.md
 part3a-search/           Part 3A: README, Starter/, Tests/, SOLUTIONS.md
 part3b-vector-search/    Part 3B: README, Starter/, Tests/, SOLUTIONS.md
 part4a-rag/              Part 4A: README, Starter/, Tests/, SOLUTIONS.md
+part4b-agent/            Part 4B: README, Starter/, Tests/, SOLUTIONS.md
 LandingPage/             The challenge's front door (Blazor WebAssembly)
 docs/
   setup.md               Full setup instructions and troubleshooting

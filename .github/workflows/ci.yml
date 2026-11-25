@@ -46,6 +46,7 @@ jobs:
           - { id: "3A", folder: part3a-search }
           - { id: "3B", folder: part3b-vector-search }
           - { id: "4A", folder: part4a-rag }
+          - { id: "4B", folder: part4b-agent }
 
     services:
       mongodb:

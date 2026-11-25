@@ -300,4 +300,20 @@ The same retriever through Semantic Kernel's MongoDB connector (a **preview** pa
 
 ## Part 4B — Agents
 
-*Added when Part 4B ships.*
+An agent is a model that can call functions, in a loop, with a memory. The badge may show it in Python or LangGraph, but the ideas and the MongoDB parts are the same.
+
+| What you want | Elsewhere (Python / LangGraph, shell) | C# |
+|---|---|---|
+| Define a tool | a function with a docstring and typed arguments (a LangChain `@tool`) | a method with `[Description]`s, wrapped by `AIFunctionFactory.Create(method, target, options)` |
+| What a model is shown about a tool | name, description and a JSON schema of the parameters | `AIFunction.Name`, `.Description` and `.JsonSchema` |
+| A tool call, from the model | a message with `tool_calls: [{ id, name, args }]` | `FunctionCallContent(callId, name, arguments)` |
+| A tool result, back to the model | a message with role `tool` and the call's `tool_call_id` | `FunctionResultContent(callId, result)`, in a message with `ChatRole.Tool` |
+| The agent loop | a graph: an *agent* node, a *tools* node, a conditional edge, and an edge back | `ChatClientAgent`, or the `for` loop in Part 4B's `ToolLoop` |
+| A cap on the loop | `recursion_limit` | a `maxTurns` you enforce yourself (`ToolLoop`) |
+| A retrieval tool | a retriever exposed as a tool | `TextSearchProvider` with `SearchTime = OnDemandFunctionCalling` |
+| Short-term memory | a checkpointer, or the message history | a `ChatHistoryProvider` (`MongoChatHistoryProvider`) |
+| Store a message | `insertOne({ conversationId, sequence, role, message, createdAt })` | `InsertManyAsync` of `StoredMessage` |
+| Read a conversation in order | `find({ conversationId }).sort({ sequence: 1 })` | `Find(m => m.ConversationId == id).SortBy(m => m.Sequence)` |
+| One message per position | `createIndex({ conversationId: 1, sequence: 1 }, { unique: true })` | `CreateIndexOptions { Unique = true }` |
+| Expire old conversations | `createIndex({ createdAt: 1 }, { expireAfterSeconds: 86400 })` | `CreateIndexOptions { ExpireAfter = TimeSpan.FromHours(24) }` |
+| Keep a window of the conversation | trim the message list, never between a tool call and its result | `ChatWindow.TrimToRecent` |

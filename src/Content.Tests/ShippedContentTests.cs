@@ -282,6 +282,47 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void Part_4B_has_all_nine_steps_in_its_table_of_contents_and_all_nine_solutions()
+    {
+        var steps = Rendered["parts/4B"].Toc
+            .Where(t => t.Level == 3)
+            .Select(t => Regex.Match(t.Text, @"^Step (\d+) —"))
+            .Where(m => m.Success)
+            .Select(m => int.Parse(m.Groups[1].Value))
+            .ToList();
+
+        Assert.Equal(Enumerable.Range(1, 9), steps);
+        Assert.Equal(9, Regex.Matches(Rendered["parts/4B/solutions"].Html, @"<summary><b>Step (\d+) —").Count);
+    }
+
+    [Fact]
+    public void Part_4B_warns_up_front_about_the_two_quiet_failures_and_says_long_term_memory_is_not_built()
+    {
+        // A loop with no limit, and a window that cuts a tool call from its result, both fail quietly. They must stay prominent,
+        // and "long-term memory is explained, not built" has to be said, not implied.
+        var readme = RepoFiles.Read("part4b-agent/README.md");
+        var firstScreen = readme[..readme.IndexOf("## The story", StringComparison.Ordinal)];
+
+        Assert.Contains("no natural end", firstScreen);
+        Assert.Contains("no call before it", firstScreen);
+        Assert.Contains("### Step 5", readme);
+        Assert.Contains("turn limit", readme[readme.IndexOf("## Badge checklist", StringComparison.Ordinal)..readme.IndexOf("## 📋 From C# to the badge", StringComparison.Ordinal)]);
+        Assert.Contains("not built", readme[readme.IndexOf("### Memory: short-term and long-term", StringComparison.Ordinal)..readme.IndexOf("## The data", StringComparison.Ordinal)]);
+    }
+
+    [Fact]
+    public void Part_4B_explains_the_cycle_and_bridges_it_to_langgraph()
+    {
+        // Objective 5 is "cyclical graphs", and the badges may be framed around LangGraph: the bridge has to be in the README.
+        var readme = RepoFiles.Read("part4b-agent/README.md");
+
+        Assert.Contains("### The cycle", readme);
+        Assert.Contains("LangGraph", readme);
+        Assert.Contains("conditional edge", readme);
+        Assert.Contains("cyclical", readme);
+    }
+
+    [Fact]
     public void Every_step_in_a_readme_has_a_matching_solution()
     {
         // The two files are written separately, so nothing else stops a step being added to one and

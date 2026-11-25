@@ -37,6 +37,13 @@
   <Folder Name="/part4a-rag/Tests/">
     <Project Path="part4a-rag/Tests/Part4A.Tests.csproj" />
   </Folder>
+  <Folder Name="/part4b-agent/" />
+  <Folder Name="/part4b-agent/Starter/">
+    <Project Path="part4b-agent/Starter/Part4B.Starter.csproj" />
+  </Folder>
+  <Folder Name="/part4b-agent/Tests/">
+    <Project Path="part4b-agent/Tests/Part4B.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Content/">
     <Project Path="src/Content/SantasWorkshop.Content.csproj" />
@@ -50,6 +57,9 @@
   <Folder Name="/tools/" />
   <Folder Name="/tools/ask/">
     <Project Path="tools/ask/SantasWorkshop.Ask.csproj" />
+  </Folder>
+  <Folder Name="/tools/elf-chat/">
+    <Project Path="tools/elf-chat/SantasWorkshop.ElfChat.csproj" />
   </Folder>
   <Folder Name="/tools/embed/">
     <Project Path="tools/embed/SantasWorkshop.Embed.csproj" />
