@@ -6,8 +6,9 @@
 <div class="wrap">
     <h1>Challenges</h1>
     <p>
-        Five parts, released through December. Each one takes <strong>30–60 minutes</strong>
-        on the core path, and each has a <em>Level up</em> section if you want to go further.
+        @Config.Parts.Count parts, released through December. The core path takes <strong>from about half an hour
+        (Part 1) to about two hours (Part 4B)</strong>, as the time on each card says (these are estimates), and each part has a <em>Level up</em>
+        section if you want to go further.
     </p>
     <p>
         All the code lives in <a href="@Config.Repo" target="_blank" rel="noopener">one repository</a>
@@ -35,7 +36,7 @@
                             <span class="tag tag--date">Releases @part.Released</span>
                         }
                         <span class="tag">@part.Level</span>
-                        <span class="tag">30–60 minutes</span>
+                        <span class="tag">@part.Time</span>
                     </div>
 
                     <h4 style="margin:0 0 .5rem;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)">
@@ -71,7 +72,7 @@
     <h2>Level up badges</h2>
     <p>
         Three more badges are covered by the optional <em>Level up</em> sections. They
-        don't count against the 30–60 minutes, and you can skip them entirely.
+        don't count against the time on each card, and you can skip them entirely.
     </p>
     <div class="part__links" style="margin-top:1rem">
         @foreach (var badge in Config.LevelUpBadges)

@@ -19,10 +19,10 @@ daily puzzle, and nothing expires.
 | **2 — The Naughty/Nice Ledger** | Dec 5 | Aggregation pipelines over this year's letters and orders | Fundamentals of Data Transformation | Beginner |
 | **3A — Finding the Perfect Gift** | Dec 9 | Full-text search over the catalogue, with fuzzy matching and autocomplete | Search Fundamentals | Intermediate |
 | **3B — Finding the Perfect Gift** | Dec 13 | Semantic search: "something for a 7-year-old who loves dinosaurs and space" | Vector Search Fundamentals | Intermediate |
-| **4 — Santa's Elf Assistant** | Dec 17 | A RAG pipeline over the Elf Handbook, then an AI agent that uses it | RAG with MongoDB **and** AI Agents with MongoDB | Intermediate |
+| **4A — Santa's Elf Assistant: RAG** | Dec 17 | An assistant that answers from the Elf Handbook, and says where each answer came from | RAG with MongoDB | Intermediate |
+| **4B — Santa's Elf Assistant: Agents** | Dec 17 | An agent that decides for itself which tool to use, with a memory kept in MongoDB | AI Agents with MongoDB | Intermediate |
 
-Each part takes **30–60 minutes** on the core path. Every part also has a **Level up**
-section if you want to go further.
+The core path takes about **30–60 minutes** for Parts 1 and 2, about an hour for Part 3, and longer for Part 4 (about an hour and a half for 4A, about two hours for 4B). These are estimates, and each part's README says so. Every part also has a **Level up** section if you want to go further.
 
 ---
 

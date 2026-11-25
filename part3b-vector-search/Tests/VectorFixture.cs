@@ -53,8 +53,10 @@ public sealed class VectorFixture : IAsyncLifetime
                 if (leftover.StartsWith("scratch_", StringComparison.Ordinal))
                     await Database.DropCollectionAsync(leftover);
 
-            await Database.DropCollectionAsync("toys");
-            Toys = Database.GetCollection<Toy>("toys");
+            // A new name every run, because a dropped collection's search index is torn down in the background: building an
+            // index with the same name on a same-named collection straight away can collide with the old one, and then it never
+            // answers. (The "scratch_" prefix is what makes the cleanup above find it next time.)
+            Toys = Database.GetCollection<Toy>($"scratch_reference_{Guid.NewGuid():N}");
             await Toys.InsertManyAsync(Catalogue);
 
             await CreateReferenceIndexAsync(Toys);
@@ -114,11 +116,27 @@ public sealed class VectorFixture : IAsyncLifetime
         while (DateTime.UtcNow < giveUpAt)
         {
             var found = await (await collection.SearchIndexes.ListAsync(ReferenceIndex)).ToListAsync();
-            if (found.Count > 0 && found[0]["queryable"].AsBoolean) return;
+            if (found.Count > 0 && found[0]["queryable"].AsBoolean) break;
             await Task.Delay(250);
         }
 
-        throw new TimeoutException("The reference vector index never became queryable. Is mongot running? Try the doctor.");
+        // "queryable" means the index will answer, not that it has finished reading the documents. Ask for every toy and wait
+        // until they all arrive.
+        var expected = (int)await collection.CountDocumentsAsync(FilterDefinition<Toy>.Empty);
+        var probe = Catalogue[0].DescriptionEmbedding!.Select(x => (double)x).ToList();
+        while (DateTime.UtcNow < giveUpAt)
+        {
+            var stage = new BsonDocument("$vectorSearch", new BsonDocument
+            {
+                { "index", ReferenceIndex }, { "path", "descriptionEmbedding" }, { "queryVector", new BsonArray(probe) },
+                { "numCandidates", expected * 10 }, { "limit", expected },
+            });
+
+            if ((await collection.Aggregate<BsonDocument>(new[] { stage }).ToListAsync()).Count == expected) return;
+            await Task.Delay(250);
+        }
+
+        throw new TimeoutException("The reference vector index never became queryable and complete. Is mongot running? Try the doctor.");
     }
 }
 

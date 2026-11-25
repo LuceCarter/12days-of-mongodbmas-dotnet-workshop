@@ -60,6 +60,25 @@ public sealed class RepoReferenceTests
     }
 
     [Fact]
+    public void Each_parts_card_time_matches_the_time_in_its_own_readme()
+    {
+        // The card on the challenges page and the README's "Time:" line are two copies of one estimate. Keep them one.
+        var settings = System.Text.Json.JsonDocument.Parse(RepoFiles.Read("LandingPage/wwwroot/appsettings.json")).RootElement;
+
+        foreach (var part in settings.GetProperty("Parts").EnumerateArray())
+        {
+            var folder = part.GetProperty("Folder").GetString()!;
+            if (!RepoFiles.Exists($"{folder}/README.md")) continue;
+
+            var time = part.GetProperty("Time").GetString()!;
+            var line = RepoFiles.Read($"{folder}/README.md").Split('\n').First(l => l.Contains("**Time:**"));
+
+            Assert.True(line.Contains(time, StringComparison.OrdinalIgnoreCase),
+                $"Part {part.GetProperty("Id").GetString()}'s card says \"{time}\", but its README says: {line.Trim()}");
+        }
+    }
+
+    [Fact]
     public void Every_written_part_says_where_to_get_the_code_and_which_file_to_edit()
     {
         foreach (var part in RepoFiles.WrittenParts())

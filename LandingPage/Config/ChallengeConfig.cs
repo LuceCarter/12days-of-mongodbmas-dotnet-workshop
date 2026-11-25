@@ -86,6 +86,10 @@ public sealed class Part
     public string Title { get; init; } = "";
     public string Released { get; init; } = "";
     public string Level { get; init; } = "";
+
+    /// <summary>How long the core path takes, as the part's own README says (an estimate), e.g. "About an hour".</summary>
+    public string Time { get; init; } = "30–60 minutes";
+
     public bool Available { get; init; }
     public string Summary { get; init; } = "";
     public IReadOnlyList<string> Teaches { get; init; } = [];
@@ -96,7 +100,7 @@ public sealed class Part
 
     public Part WithAvailable(bool available) => new()
     {
-        Id = Id, Title = Title, Released = Released, Level = Level, Available = available,
+        Id = Id, Title = Title, Released = Released, Level = Level, Time = Time, Available = available,
         Summary = Summary, Teaches = Teaches, Folder = Folder, Badges = Badges,
     };
 }

@@ -67,8 +67,10 @@ public sealed class SearchFixture : IAsyncLifetime
                 if (leftover.StartsWith("scratch_", StringComparison.Ordinal))
                     await Database.DropCollectionAsync(leftover);
 
-            await Database.DropCollectionAsync("toys");
-            Toys = Database.GetCollection<Toy>("toys");
+            // A new name every run, because a dropped collection's search index is torn down in the background: building an
+            // index with the same name on a same-named collection straight away can collide with the old one, and then it never
+            // answers. (The "scratch_" prefix is what makes the cleanup above find it next time.)
+            Toys = Database.GetCollection<Toy>($"scratch_reference_{Guid.NewGuid():N}");
             await Toys.InsertManyAsync(Catalogue);
 
             await CreateAsync(Toys, ReferenceDynamic, """{ mappings: { dynamic: true } }""");
@@ -119,11 +121,28 @@ public sealed class SearchFixture : IAsyncLifetime
         while (DateTime.UtcNow < giveUpAt)
         {
             var found = await (await collection.SearchIndexes.ListAsync(name)).ToListAsync();
-            if (found.Count > 0 && found[0]["queryable"].AsBoolean) return;
+            if (found.Count > 0 && found[0]["queryable"].AsBoolean) break;
             await Task.Delay(250);
         }
 
-        throw new TimeoutException($"The reference index '{name}' never became queryable. Is mongot running? Try the doctor.");
+        // "queryable" means the index will answer, not that it has finished reading the documents. Count what it can see, and wait
+        // until that is every toy (both reference indexes map "name", so this works for each).
+        var expected = await collection.CountDocumentsAsync(FilterDefinition<Toy>.Empty);
+        while (DateTime.UtcNow < giveUpAt)
+        {
+            var meta = new BsonDocument("$searchMeta", new BsonDocument
+            {
+                { "index", name },
+                { "exists", new BsonDocument("path", "name") },
+                { "count", new BsonDocument("type", "total") },
+            });
+
+            var seen = (await collection.Aggregate<BsonDocument>(new[] { meta }).ToListAsync()).FirstOrDefault();
+            if (seen is not null && seen["count"]["total"].ToInt64() == expected) return;
+            await Task.Delay(250);
+        }
+
+        throw new TimeoutException($"The reference index '{name}' never became queryable and complete. Is mongot running? Try the doctor.");
     }
 }
 
