@@ -43,15 +43,39 @@ def solutions_from_markdown(path: pathlib.Path) -> dict[str, str]:
                 f"{code.splitlines()[0]}"
             )
 
-        name = match.group(1)
-        if name in found:
-            raise SystemExit(f"{path}: two solution blocks both define {name}().")
-        found[name] = code
+        # A block usually answers one method. A step that is really several small methods (Part 4B's Step 7) may
+        # answer them all in one block: each top-level `public` method, starting at column 0, is a separate solution.
+        for name, method in split_methods(code):
+            if name in found:
+                raise SystemExit(f"{path}: two solution blocks both define {name}().")
+            found[name] = method
 
     if not found:
         raise SystemExit(f"{path}: no solutions found. Has the file's shape changed?")
 
     return found
+
+
+TOP_LEVEL = re.compile(r"^public\s+(?:async\s+)?[\w<>,\[\]?\. ]+?\s+(\w+)\s*\(", re.M)
+
+
+def split_methods(code: str) -> list[tuple[str, str]]:
+    """
+    (name, code) for each top-level public method in a solution block.
+
+    Almost always that is one pair: the whole block. Only a block with SEVERAL declarations that start at column 0
+    is cut up, so every existing single-method block is unchanged.
+    """
+    starts = list(TOP_LEVEL.finditer(code))
+    if len(starts) <= 1:
+        first = SIGNATURE.search(code)
+        return [(first.group(1), code)]
+
+    pieces = []
+    for index, start in enumerate(starts):
+        end = starts[index + 1].start() if index + 1 < len(starts) else len(code)
+        pieces.append((start.group(1), code[start.start():end].rstrip("\n")))
+    return pieces
 
 
 def method_span(source: str, name: str) -> tuple[int, int]:
